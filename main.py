@@ -35,18 +35,20 @@ user_ratings = user_ratings.pivot_table(index=['userId'], columns=['title'], val
 # Show first 5 rows
 user_ratings.head()
 
-#shape return (users, movies) in the dataset
-#There are 610 users and 9719 movies in our dataset
+# Return tuple of the array dimensions in dataset of 610 users and 9719 movies
 user_ratings.shape
 
-#Similarity Calculation - using Pearson Correlation Coefficient
+# Calculate similarity using Pearson Correlation Coefficient
 user_distances_pearson = user_ratings.transpose().corr(method='pearson')
 user_distances_pearson
 
+# Set neighbour amount for k-nearest neighbour amount
 kneighbors = 10
-# Keep only the rows+columns with at least kneighbors+1 number non-NA values.
+
+# Keep rows and columns with atleast kneighbors+1 number and non-NA values.
 user_distances_pearson = user_distances_pearson.dropna(axis=0, thresh=kneighbors+1).dropna(axis=1,
 thresh=kneighbors+1)
+
 # Make the matrix square (dropping the extra rows as well)
 user_distances_pearson = user_distances_pearson.loc[user_distances_pearson.columns]
 
@@ -56,7 +58,7 @@ user_distances_pearson = 1.0 - user_distances_pearson
 user_distances_pearson[user_distances_pearson < 0] = 0
 
 
-# define model
+# k-nn model
 # metric is precomputed, X is assumed to be a distance matrix and must be square during fit
 model_knn = NearestNeighbors(metric='precomputed', algorithm='brute', n_neighbors=kneighbors, n_jobs=-1)
 # fit
