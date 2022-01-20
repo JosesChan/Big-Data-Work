@@ -4,7 +4,7 @@ from pyspark.sql import SparkSession
 from sklearn.neighbors import NearestNeighbors
 from scipy.sparse import csr_matrix
 import findspark
-import pandas as pd
+import pandas 
 
 findspark.init()
 
@@ -19,80 +19,80 @@ ratings = ratings.withColumn('userId', col('userId').cast('integer')). withColum
 ratings.show(5)
 
 # Equijoin the movieId column in ratings and movies
-user_ratings = ratings.join(movies, on='movieId')
+userRatings = ratings.join(movies, on='movieId')
 # Create dataframe with Pandas
-user_ratings = user_ratings.toPandas()
+userRatings = userRatings.toPandas()
 # Create pivot table from dataframe
-user_ratings = user_ratings.pivot_table(index=['userId'], columns=['title'], values='rating')
+userRatings = userRatings.pivot_table(index=['userId'], columns=['title'], values='rating')
 # Show first 5 rows
-user_ratings.head()
+userRatings.head()
 
 # Return tuple of the array dimensions in dataset of 610 users and 9719 movies
-user_ratings.shape
+userRatings.shape
 
 # Set neighbour amount for k-nearest neighbour amount
-kneighbors = 10
+kNeighbors = 10
 
 # Pearson implementation
 # Calculate similarity using Pearson Correlation Coefficient
-user_distances_pearson = user_ratings.transpose().corr(method='pearson')
+userDistancePearson = userRatings.transpose().corr(method='pearson')
 
 # Keep rows and columns that have atleast k+1 neighbors and values that are non-NA.
-user_distances_pearson = user_distances_pearson.dropna(axis=0, thresh=kneighbors+1).dropna(axis=1,
-thresh=kneighbors+1)
+userDistancePearson = userDistancePearson.dropna(axis=0, thresh=kNeighbors+1).dropna(axis=1,
+thresh=kNeighbors+1)
 
 # Create square matrix, remove additional rows 
-user_distances_pearson = user_distances_pearson.loc[user_distances_pearson.columns]
+userDistancePearson = userDistancePearson.loc[userDistancePearson.columns]
 
 # Calculate distance between users
 # Pearson Correlation Coefficient boundaries, 1 to -1, Pearson distance metric boundaries 0 to 2, Pearson distance = 1 - r
-user_distances_pearson = 1.0 - user_distances_pearson
+userDistancePearson = 1.0 - userDistancePearson
 # account for floating point precision problem
-user_distances_pearson[user_distances_pearson < 0] = 0
+userDistancePearson[userDistancePearson < 0] = 0
 
 # k-nn forming neighborhoods 
 # metric set to precomputed, X is assumed to be a distance matrix and must be square during fit
-model_knn = NearestNeighbors(metric='precomputed', algorithm='brute', n_neighbors=kneighbors, n_jobs=-1)
+modelKNN = NearestNeighbors(metric='precomputed', algorithm='brute', n_neighbors=kNeighbors, n_jobs=-1)
 # fitting of X, X graph might be sparsely populated making non-zero elements the only canidates for being a neighbour
-model_knn.fit(csr_matrix(user_distances_pearson.fillna(0).values))
+modelKNN.fit(csr_matrix(userDistancePearson.fillna(0).values))
 # predict with k-nn model
-similarity, indexes = model_knn.kneighbors(csr_matrix(user_distances_pearson.fillna(0).values),n_neighbors=kneighbors)
+similarity, indexes = modelKNN.kNeighbors(csr_matrix(userDistancePearson.fillna(0).values),n_neighbors=kNeighbors)
 
 # average top 10 ratings using pearson
 # get neighbor id from user distance pearson dataframe as it currently stores the int index and not the actual id
 # then use K-nn imputation, calculates missing ratings
 # then calculate average top 10 from list
-neighborhoods_pearson = pd.DataFrame({'neighborhood_ids':[user_distances_pearson.iloc[neighbors].index.to_list() for neighbors in indexes],'distance': similarity.tolist()},index=user_distances_pearson.index)
-user_1_neighbors_pearson = neighborhoods_pearson['neighborhood_ids'].loc[1]
-user_ratings.loc[user_1_neighbors_pearson].mean().sort_values(ascending=False)[:10]
+neighborhoods_pearson = pandas.DataFrame({'neighborhood_ids':[userDistancePearson.iloc[neighbors].index.to_list() for neighbors in indexes],'distance': similarity.tolist()},index=userDistancePearson.index)
+user1NeighborsPearson = neighborhoods_pearson['neighborhood_ids'].loc[1]
+userRatings.loc[user1NeighborsPearson].mean().sort_values(ascending=False)[:10]
 
 # Spearman's rank correlation implementation
 # Calculate similarity using Pearson Correlation Coefficient
-user_distances_spearman = user_ratings.transpose().corr(method='spearman')
+userDistancesSpearman = userRatings.transpose().corr(method='spearman')
 
 # Keep rows and columns that have atleast k+1 neighbors and values that are non-NA.
-user_distances_spearman = user_distances_spearman.dropna(axis=0, thresh=kneighbors+1).dropna(axis=1,thresh=kneighbors+1)
+userDistancesSpearman = userDistancesSpearman.dropna(axis=0, thresh=kNeighbors+1).dropna(axis=1,thresh=kNeighbors+1)
 # Create square matrix, remove additional rows 
-user_distances_spearman = user_distances_spearman.loc[user_distances_spearman.columns]
+userDistancesSpearman = userDistancesSpearman.loc[userDistancesSpearman.columns]
 
 # Calculate distance between users
-user_distances_spearman = 1.0 - user_distances_spearman
-user_distances_spearman[user_distances_spearman < 0] = 0
+userDistancesSpearman = 1.0 - userDistancesSpearman
+userDistancesSpearman[userDistancesSpearman < 0] = 0
 
 # k-nn forming neighborhoods
-model_knn = NearestNeighbors(metric='precomputed', algorithm='brute', n_neighbors=kneighbors, n_jobs=-1)
-model_knn.fit(csr_matrix(user_distances_spearman.fillna(0).values))
-similarity, indexes = model_knn.kneighbors(csr_matrix(user_distances_spearman.fillna(0).values),n_neighbors=kneighbors)
+modelKNN = NearestNeighbors(metric='precomputed', algorithm='brute', n_neighbors=kNeighbors, n_jobs=-1)
+modelKNN.fit(csr_matrix(userDistancesSpearman.fillna(0).values))
+similarity, indexes = modelKNN.kNeighbors(csr_matrix(userDistancesSpearman.fillna(0).values),n_neighbors=kNeighbors)
 
 # average ratings using spearman's
-neighborhoods_spearman = pd.DataFrame({'neighborhood_ids':[user_distances_spearman.iloc[neighbors].index.to_list() for neighbors in indexes],'distance': similarity.tolist()}, index=user_distances_spearman.index)
-user_1_neighbors_spearman = neighborhoods_spearman['neighborhood_ids'].loc[1]
-user_ratings.loc[user_1_neighbors_spearman].mean().sort_values(ascending=False)[:10]
+neighborhoods_spearman = pandas.DataFrame({'neighborhood_ids':[userDistancesSpearman.iloc[neighbors].index.to_list() for neighbors in indexes],'distance': similarity.tolist()}, index=userDistancesSpearman.index)
+user1NeighborsSpearman = neighborhoods_spearman['neighborhood_ids'].loc[1]
+userRatings.loc[user1NeighborsSpearman].mean().sort_values(ascending=False)[:10]
 
 #Both spearman and pearson recommendations examined through breakpoints
 #movies recommendation to user 1 based neighborhoods with pearson
-user_ratings.loc[user_1_neighbors_pearson].mean().sort_values(ascending=False)[:10]
+userRatings.loc[user1NeighborsPearson].mean().sort_values(ascending=False)[:10]
 #movies recommendation to user 1 based neighborhoods with spearman
-user_ratings.loc[user_1_neighbors_spearman].mean().sort_values(ascending=False)[:10]
+userRatings.loc[user1NeighborsSpearman].mean().sort_values(ascending=False)[:10]
 
 
