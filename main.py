@@ -1,10 +1,8 @@
 
 from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
-from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier
-from sklearn.metrics import zero_one_loss
-from sklearn import tree, svm
+from pyspark.mllib.tree import DecisionTree, DecisionTreeModel
+from pyspark.mllib.util import MLUtils
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
@@ -73,7 +71,7 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 
 # Task 4: Shuffle data into 70% training set and 30% test set
 
-pandasRandomTrainNuclearPlantsSmall, pandasRandomTestNuclearPlantsSmall = pandasNuclearPlantsSmall.randomsplit([0.7, 0.3])
+(pandasRandomTrainNuclearPlantsSmall, pandasRandomTestNuclearPlantsSmall) = pandasNuclearPlantsSmall.randomsplit([0.7, 0.3])
 
 xTrain = pandasRandomTrainNuclearPlantsSmall.drop(["Status"])
 yTrain = pandasRandomTrainNuclearPlantsSmall["Status"]
@@ -83,6 +81,9 @@ yTest = pandasRandomTestNuclearPlantsSmall["Status"]
 
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
+
+# Change into this
+#https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
 
 # Instance of Decision tree classifier
 treeClf = tree.DecisionTreeClassifier(max_depth=2, random_state=0)
