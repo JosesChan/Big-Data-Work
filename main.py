@@ -67,18 +67,18 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 #     print("VAR:") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].var())
 #     print()
-#    plt.savefig('Graph '+i)
-
-plt.show()
+#     plt.savefig('Graph '+i)
+# plt.show()
 
 # Task 3: Show in a table the correlation matrix, where each element shows correlation between two features, find highly correlated features.
 
-print("Correlation Matrix")
-print(pandasNormalNuclearPlantsSmall.corr(method="pearson"))
+# Using pearson and not spearman's or Kendall's since data is not monotonic
+# print("Pearson Correlation Matrix")
+# print(pandasNormalNuclearPlantsSmall.corr(method="pearson"))
 
 # Task 4: Shuffle data into 70% training set and 30% test set
 
-#trainingSet, testingSet = pandasNuclearPlantsSmall.randomsplit([0.7, 0.3])
+trainingSet, testingSet = pandasNuclearPlantsSmall.randomsplit([0.7, 0.3])
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Tota; Classified Samples), calculate sensitivity and specificity 
 # Task 6: Compare results based on task 5, which is best
