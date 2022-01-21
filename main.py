@@ -17,7 +17,7 @@ sparksNuclearPlantsSmall = spark.read.csv("dataset/nuclear_plants_small_dataset.
 #ratings = ratings.withColumn('userId', col('userId').cast('integer'))
 
 pandasNuclearPlantsSmall = pandas.read_csv("dataset/nuclear_plants_small_dataset.csv")
-#sparksNuclearPlantsSmall.toPandas()
+
 
 
 
@@ -91,21 +91,21 @@ treeClf.fit(xTrain, yTrain)
 # Predict results
 yPredictTreeClf = treeClf.predict(xTest)
 # Compute error rate
-accuracy = zero_one_score(yTest, yPredictTreeClf)
+accuracy = zero_one_loss(yTest, yPredictTreeClf)
 treeErrorRate = 1 - accuracy
 
 # Instance of Support Vector Machines classifier
 svmClf = svm.SVC()
 svmClf.fit(xTrain, yTrain)
 yPredictSvmClf = svmClf.predict(xTest)
-accuracy = zero_one_score(yTest, yPredictSvmClf)
+accuracy = zero_one_loss(yTest, yPredictSvmClf)
 svmErrorRate = 1 - accuracy
 
 # Instance of multilayer perceptron, type of artificial neural network
 annClf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
 annClf.fit(xTrain, yTrain)
 yPredictAnnClf = annClf.predict(xTest)
-accuracy = zero_one_score(yTest, yPredictAnnClf)
+accuracy = zero_one_loss(yTest, yPredictAnnClf)
 annErrorRate = 1 - accuracy
 
 
