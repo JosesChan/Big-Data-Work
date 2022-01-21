@@ -1,6 +1,8 @@
 
 from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
+from sklearn.model_selection import train_test_split
+from sklearn import tree, svm
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
@@ -78,9 +80,38 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 
 # Task 4: Shuffle data into 70% training set and 30% test set
 
-trainingSet, testingSet = pandasNuclearPlantsSmall.randomsplit([0.7, 0.3])
+pandasRandomTrainNuclearPlantsSmall, pandasRandomTestNuclearPlantsSmall = pandasNuclearPlantsSmall.randomsplit([0.7, 0.3])
+
+xTrain = pandasRandomTrainNuclearPlantsSmall.drop(["Status"])
+yTrain = pandasRandomTrainNuclearPlantsSmall["Status"]
+
+xTest = pandasRandomTestNuclearPlantsSmall.drop(["Status"])
+yTest = pandasRandomTestNuclearPlantsSmall["Status"]
+
+
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Tota; Classified Samples), calculate sensitivity and specificity 
+
+# Instance of Decision tree classifier
+treeClf = tree.DecisionTreeClassifier(max_depth=2, random_state=0)
+
+# Train tree on the data
+treeClf.fit(xTrain, yTrain)
+
+# Predict results
+treeClf.predict(xTest)
+
+# Instance of Support Vector Machines classifier
+svmClf = svm.SVC()
+svmClf.fit(xTrain, yTrain)
+svmClf.predict(xTest)
+
+# Instance of multilayer perceptron, type of artificial neural network
+clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+clf.fit(X, y)
+MLPClassifier(alpha=1e-05, hidden_layer_sizes=(5, 2), random_state=1,solver='lbfgs')
+
+
 # Task 6: Compare results based on task 5, which is best
 # Task 7: Discuss if features can detect abnormality in reactors
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
