@@ -2,19 +2,11 @@
 from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
 from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
 from sklearn import tree, svm
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
-
-# library & dataset
-import seaborn as sns
-#df = sns.load_dataset('iris')
-
-#sns.boxplot( x=df["species"], y=df["sepal_length"] )
-#plt.show()
-
-#pyspark matlablib and seaborn pandas
 
 spark = SparkSession.builder.getOrCreate()
 
@@ -94,23 +86,20 @@ yTest = pandasRandomTestNuclearPlantsSmall["Status"]
 
 # Instance of Decision tree classifier
 treeClf = tree.DecisionTreeClassifier(max_depth=2, random_state=0)
-
 # Train tree on the data
 treeClf.fit(xTrain, yTrain)
-
 # Predict results
-treeClf.predict(xTest)
+yPredictTreeClf = treeClf.predict(xTest)
 
 # Instance of Support Vector Machines classifier
 svmClf = svm.SVC()
 svmClf.fit(xTrain, yTrain)
-svmClf.predict(xTest)
+yPredictSvmClf = svmClf.predict(xTest)
 
 # Instance of multilayer perceptron, type of artificial neural network
-clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
-clf.fit(X, y)
-MLPClassifier(alpha=1e-05, hidden_layer_sizes=(5, 2), random_state=1,solver='lbfgs')
-
+annClf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+annClf.fit(xTrain, yTrain)
+yPredictAnnClf = annClf.predict(xTest)
 
 # Task 6: Compare results based on task 5, which is best
 # Task 7: Discuss if features can detect abnormality in reactors
