@@ -3,6 +3,7 @@ from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import zero_one_loss
 from sklearn import tree, svm
 import pandas 
 import seaborn
@@ -35,30 +36,30 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 #     plt.figure()
 #     seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
 #     print("Normal" + i)
-#     print("MINIMUM:") 
+#     print("MINIMUM: \") 
 #     print(pandasNormalNuclearPlantsSmall[i].max())
-#     print("MAX:") 
+#     print("MAX: \") 
 #     print(pandasNormalNuclearPlantsSmall[i].min())
-#     print("MEAN:") 
+#     print("MEAN: \") 
 #     print(pandasNormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN:") 
+#     print("MEDIAN: \") 
 #     print(pandasNormalNuclearPlantsSmall[i].median())
-#     print("MODE:") 
+#     print("MODE: \") 
 #     print(pandasNormalNuclearPlantsSmall[i].mode())
-#     print("VAR:") 
+#     print("VAR: \") 
 #     print(pandasNormalNuclearPlantsSmall[i].var())
 #     print("Abnormal "+ i)
-#     print("MINIMUM:") 
+#     print("MINIMUM: \") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].max())
-#     print("MAX:") 
+#     print("MAX: \") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].min())
-#     print("MEAN:") 
+#     print("MEAN: \") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN:") 
+#     print("MEDIAN: \") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].median())
-#     print("MODE:") 
+#     print("MODE: \") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].mode())
-#     print("VAR:") 
+#     print("VAR: \") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].var())
 #     print()
 #     plt.savefig('Graph '+i)
@@ -81,8 +82,7 @@ xTest = pandasRandomTestNuclearPlantsSmall.drop(["Status"])
 yTest = pandasRandomTestNuclearPlantsSmall["Status"]
 
 
-
-# Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Tota; Classified Samples), calculate sensitivity and specificity 
+# Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 
 # Instance of Decision tree classifier
 treeClf = tree.DecisionTreeClassifier(max_depth=2, random_state=0)
@@ -90,18 +90,31 @@ treeClf = tree.DecisionTreeClassifier(max_depth=2, random_state=0)
 treeClf.fit(xTrain, yTrain)
 # Predict results
 yPredictTreeClf = treeClf.predict(xTest)
+# Compute error rate
+accuracy = zero_one_score(yTest, yPredictTreeClf)
+treeErrorRate = 1 - accuracy
 
 # Instance of Support Vector Machines classifier
 svmClf = svm.SVC()
 svmClf.fit(xTrain, yTrain)
 yPredictSvmClf = svmClf.predict(xTest)
+accuracy = zero_one_score(yTest, yPredictSvmClf)
+svmErrorRate = 1 - accuracy
 
 # Instance of multilayer perceptron, type of artificial neural network
 annClf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
 annClf.fit(xTrain, yTrain)
 yPredictAnnClf = annClf.predict(xTest)
+accuracy = zero_one_score(yTest, yPredictAnnClf)
+annErrorRate = 1 - accuracy
+
 
 # Task 6: Compare results based on task 5, which is best
+
+print("Error rate for decision tree" + treeErrorRate)
+print("Error rate for support vector machines" + svmErrorRate)
+print("Error rate for artificial neural network" + annErrorRate)
+
 # Task 7: Discuss if features can detect abnormality in reactors
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
 
