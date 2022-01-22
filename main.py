@@ -9,6 +9,8 @@ from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.mllib.util import MLUtils
 from pyspark.mllib.classification import SVMWithSGD, SVMModel
 from pyspark.mllib.regression import LabeledPoint
+from pyspark.ml.linalg import Vectors
+from pyspark.ml.feature import VectorAssembler
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
@@ -81,13 +83,18 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 
 # Index labels, adding metadata (for identification) to the label column
 # Fit the entire dataset, including all labels in index
-labelIndexer = StringIndexer(inputCol="Status", outputCol="StatusIndexedLabel").fit(sparksNuclearPlantsSmall)
+labelIndexer = StringIndexer(inputCol="Status", outputCol="statusIndexedLabel").fit(sparksNuclearPlantsSmall)
 
 # Inputting x value
 # Automatically identify categorical features, and index them seperately.
 # Using maxCategories, we can select features with > 4 distinct values to be treated as continuous 
-# (Continous instead of discrete, infinite number of values between two values) (Status label has 2 distinct known values currently, can be considered discrete).
-featureIndexer = VectorIndexer(inputCol="features", outputCol="indexedFeatures", maxCategories=4).fit(sparksNuclearPlantsSmall)
+# (Continous instead of discrete, infinite number of values between two values) (Status label has 2 distinct known values currently, can be considered discrete
+
+colNameList = (sparksNuclearPlantsSmall.drop("Status")).schema.names
+
+assembler = VectorAssembler(inputCols=colNameList,outputCol="features")
+
+featuresIndexer = assembler.transform(sparksNuclearPlantsSmall)
 
 # Split the data into training and test sets (30% held out for testing)
 (trainingData, testData) = sparksNuclearPlantsSmall.randomSplit([0.7, 0.3])
@@ -97,30 +104,30 @@ featureIndexer = VectorIndexer(inputCol="features", outputCol="indexedFeatures",
 # Change into this
 #https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
 
-# # Instance of Decision tree classifier
-# treeClf = DecisionTreeClassifier(labelCol="StatusIndexedLabel", featuresCol="indexedFeatures")
+# Instance of Decision tree classifier
+treeClf = DecisionTreeClassifier(labelCol="statusIndexedLabel", featuresCol="features")
 
-# # Link the indexers and tree into a pipeline
-# # Pipeline to create stages
-# # Ensuring data goes through identical processing steps
-# pipeline = Pipeline(stages=[labelIndexer, featureIndexer, treeClf])
+# Link the indexers and tree into a pipeline
+# Pipeline to create stages
+# Ensuring data goes through identical processing steps
+pipeline = Pipeline(stages=[labelIndexer, featuresIndexer, treeClf])
 
-# # Train model, pipeline estimator stage which produces a model which is a transformer. Running the indexer through the stages
-# treeModel = pipeline.fit(trainingData)
+# Train model, pipeline estimator stage which produces a model which is a transformer. Running the indexer through the stages
+treeModel = pipeline.fit(trainingData)
 
-# # Predict results, pipeline transformer stage where the model makes the predictions from the dataset
-# predictions = treeModel.transform(testData)
+# Predict results, pipeline transformer stage where the model makes the predictions from the dataset
+predictions = treeModel.transform(testData)
 
-# # Select example rows to display.
-# predictions.select("prediction", "indexedLabel", "features").show(5)
+# Select example rows to display.
+predictions.select("prediction", "indexedLabel", "features").show(5)
 
-# # Compute error rate
-# evaluator = MulticlassClassificationEvaluator(labelCol="indexedLabel", predictionCol="prediction", metricName="precision")
-# accuracy = evaluator.evaluate(predictions)
-# print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
+# Compute error rate
+evaluator = MulticlassClassificationEvaluator(labelCol="indexedLabel", predictionCol="prediction", metricName="precision")
+accuracy = evaluator.evaluate(predictions)
+print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
 
-# treeModelShow = treeModel.stages[2]
-# print (treeModelShow) 
+treeModelShow = treeModel.stages[2]
+print (treeModelShow) 
 
 
 
