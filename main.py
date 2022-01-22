@@ -11,6 +11,8 @@ from pyspark.mllib.classification import SVMWithSGD, SVMModel
 from pyspark.mllib.regression import LabeledPoint
 from pyspark.ml.linalg import Vectors
 from pyspark.ml.feature import OneHotEncoder
+from pyspark.ml.evaluation import BinaryClassificationEvaluator
+from pyspark.mllib.evaluation import BinaryClassificationMetrics, MulticlassMetrics
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
@@ -101,10 +103,9 @@ colNameList = sparksNuclearPlantsSmall.schema.names
 stages = []
 cols = sparksNuclearPlantsSmall.columns
 
-for columns in colNameList:
+for im in colNameList:
     stringIndexer = StringIndexer(inputCol = columns, outputCol = columns + 'Index')
-    encoder = OneHotEncoder(inputCols=[stringIndexer.getOutputCol()], outputCols=[columns + "classVec"])
-    stages += [stringIndexer, encoder]
+    stages += [stringIndexer]
 
 label_stringIdx = StringIndexer(inputCol = 'Status', outputCol = 'label')
 stages += [label_stringIdx]
@@ -115,8 +116,6 @@ stages += [assembler]
 
 # featuresIndexer = VectorAssembler(inputCols=colNameList,outputCol="features").transform(sparksNuclearPlantsSmall)
 
-# Split the data into training and test sets (30% held out for testing)
-(trainingData, testData) = sparksNuclearPlantsSmall.randomSplit([0.7, 0.3])
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 
@@ -138,6 +137,15 @@ selectedCols = ['label', 'features'] + cols
 df = df.select(selectedCols)
 df.printSchema()
 
+# Split the data into training and test sets (30% held out for testing)
+(trainingData, testData) = df.randomSplit([0.7, 0.3])
+
+dt = DecisionTreeClassifier(featuresCol = 'features', labelCol = 'label', maxDepth = 3)
+dtModel = dt.fit(trainingData)
+predictions = dtModel.transform(testData)
+predictions.select(colNameList[0],colNameList[1],colNameList[2],'rawPrediction', 'prediction', 'probability').show(10)
+
+
 # Train model, pipeline estimator stage which produces a model which is a transformer. Running the indexer through the stages
 # treeModel = pipeline.fit(trainingData)
 
@@ -147,15 +155,14 @@ df.printSchema()
 # Select example rows to display.
 # predictions.select("prediction", "indexedLabel", "features").show(5)
 
-# Compute error rate
-# evaluator = MulticlassClassificationEvaluator(labelCol="indexedLabel", predictionCol="prediction", metricName="precision")
-# accuracy = evaluator.evaluate(predictions)
-# print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
+# # Compute error rate
+evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
+accuracy = evaluator.evaluate(predictions)
+print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
+
 
 # treeModelShow = treeModel.stages[2]
 # print (treeModelShow) 
-
-
 
 # # Build the model
 # svmModel = SVMWithSGD.train(trainingData, iterations=100)
@@ -168,9 +175,6 @@ df.printSchema()
 # # Save and load model
 # svmModel.save(sc, "target/tmp/pythonSVMWithSGDModel")
 # sameModel = SVMModel.load(sc, "target/tmp/pythonSVMWithSGDModel")
-
-
-
 
 
 # # Instance of Support Vector Machines classifier
