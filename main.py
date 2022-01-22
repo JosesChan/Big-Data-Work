@@ -3,6 +3,11 @@ from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
 from pyspark.mllib.tree import DecisionTree, DecisionTreeModel
 from pyspark.mllib.util import MLUtils
+from pyspark.ml import Pipeline
+from pyspark.ml.classification import DecisionTreeClassifier
+from pyspark.ml.feature import StringIndexer, VectorIndexer
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator
+from pyspark.mllib.util import MLUtils
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
@@ -15,8 +20,6 @@ sparksNuclearPlantsSmall = spark.read.csv("dataset/nuclear_plants_small_dataset.
 #ratings = ratings.withColumn('userId', col('userId').cast('integer'))
 
 pandasNuclearPlantsSmall = pandas.read_csv("dataset/nuclear_plants_small_dataset.csv")
-
-
 
 
 # Task 1: Check to see if there are any missing values
@@ -71,13 +74,18 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 
 # Task 4: Shuffle data into 70% training set and 30% test set
 
-(pandasRandomTrainNuclearPlantsSmall, pandasRandomTestNuclearPlantsSmall) = pandasNuclearPlantsSmall.randomsplit([0.7, 0.3])
+# Index labels, adding metadata (for identification) to the label column
+# Fit the entire dataset, including all labels in index
+labelIndexer = StringIndexer(inputCol="label", outputCol="indexedLabel").fit(sparksNuclearPlantsSmall)
 
-xTrain = pandasRandomTrainNuclearPlantsSmall.drop(["Status"])
-yTrain = pandasRandomTrainNuclearPlantsSmall["Status"]
+# Getting our y value, feature list
+# Automatically identify categorical features, and index them seperately.
+# Using maxCategories, we can select features with > 4 distinct values to be treated as continuous 
+# (Continous instead of discrete, infinite number of values between two values) (Status label has 2 distinct known values currently, can be considered discrete).
+featureIndexer = VectorIndexer(inputCol="features", outputCol="indexedFeatures", maxCategories=4).fit(sparksNuclearPlantsSmall)
 
-xTest = pandasRandomTestNuclearPlantsSmall.drop(["Status"])
-yTest = pandasRandomTestNuclearPlantsSmall["Status"]
+# Split the data into training and test sets (30% held out for testing)
+(trainingData, testData) = sparksNuclearPlantsSmall.randomSplit([0.7, 0.3])
 
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
@@ -86,14 +94,38 @@ yTest = pandasRandomTestNuclearPlantsSmall["Status"]
 #https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
 
 # Instance of Decision tree classifier
-treeClf = tree.DecisionTreeClassifier(max_depth=2, random_state=0)
-# Train tree on the data
-treeClf.fit(xTrain, yTrain)
-# Predict results
-yPredictTreeClf = treeClf.predict(xTest)
+treeClf = DecisionTreeClassifier(labelCol="indexedLabel", featuresCol="indexedFeatures")
+
+# Link the indexers and tree into a pipeline
+# Pipeline to create stages
+# Ensuring data goes through identical processing steps
+pipeline = Pipeline(stages=[labelIndexer, featureIndexer, treeClf])
+
+# Train model, pipeline estimator stage which produces a model which is a transformer. Running the indexer through the stages
+model = pipeline.fit(trainingData)
+
+# Predict results, pipeline transformer stage where the model makes the predictions from the dataset
+predictions = model.transform(testData)
+
+# Select example rows to display.
+predictions.select("prediction", "indexedLabel", "features").show(5)
+
 # Compute error rate
-accuracy = zero_one_loss(yTest, yPredictTreeClf)
-treeErrorRate = 1 - accuracy
+evaluator = MulticlassClassificationEvaluator(labelCol="indexedLabel", predictionCol="prediction", metricName="precision")
+accuracy = evaluator.evaluate(predictions)
+print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
+
+treeModel = model.stages[2]
+print (treeModel) 
+
+
+
+
+
+
+
+
+
 
 # Instance of Support Vector Machines classifier
 svmClf = svm.SVC()
