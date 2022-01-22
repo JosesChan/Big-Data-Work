@@ -4,17 +4,18 @@ from pyspark.mllib.tree import DecisionTree, DecisionTreeModel
 from pyspark.mllib.util import MLUtils
 from pyspark.ml import Pipeline
 from pyspark.ml.classification import DecisionTreeClassifier
-from pyspark.ml.feature import StringIndexer, VectorIndexer
+from pyspark.ml.feature import StringIndexer, VectorAssembler
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.mllib.util import MLUtils
 from pyspark.mllib.classification import SVMWithSGD, SVMModel
 from pyspark.mllib.regression import LabeledPoint
 from pyspark.ml.linalg import Vectors
-from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.feature import OneHotEncoder
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
 import pyspark.sql.functions
+
 spark = SparkSession.builder.getOrCreate()
 
 # Read csv file into spark
@@ -78,8 +79,13 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 # Using pearson and not spearman's or Kendall's since data is not monotonic
 # print("Pearson Correlation Matrix")
 # print(pandasNormalNuclearPlantsSmall.corr(method="pearson"))
+# print(pandasAbnormalNuclearPlantsSmall.corr(method="pearson"))
 
 # Task 4: Shuffle data into 70% training set and 30% test set
+
+# References
+#https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
+#https://towardsdatascience.com/machine-learning-with-pyspark-and-mllib-solving-a-binary-classification-problem-96396065d2aa
 
 # Index labels, adding metadata (for identification) to the label column
 # Fit the entire dataset, including all labels in index
@@ -90,44 +96,64 @@ labelIndexer = StringIndexer(inputCol="Status", outputCol="statusIndexedLabel").
 # Using maxCategories, we can select features with > 4 distinct values to be treated as continuous 
 # (Continous instead of discrete, infinite number of values between two values) (Status label has 2 distinct known values currently, can be considered discrete
 
-colNameList = (sparksNuclearPlantsSmall.drop("Status")).schema.names
+colNameList = sparksNuclearPlantsSmall.schema.names
 
-assembler = VectorAssembler(inputCols=colNameList,outputCol="features")
+stages = []
+cols = sparksNuclearPlantsSmall.columns
 
-featuresIndexer = assembler.transform(sparksNuclearPlantsSmall)
+for columns in colNameList:
+    stringIndexer = StringIndexer(inputCol = columns, outputCol = columns + 'Index')
+    encoder = OneHotEncoder(inputCols=[stringIndexer.getOutputCol()], outputCols=[columns + "classVec"])
+    stages += [stringIndexer, encoder]
+
+label_stringIdx = StringIndexer(inputCol = 'Status', outputCol = 'label')
+stages += [label_stringIdx]
+numericColsNameList = (sparksNuclearPlantsSmall.drop("Status")).schema.names
+assembler = VectorAssembler(inputCols=numericColsNameList, outputCol="features")
+stages += [assembler]
+
+
+# featuresIndexer = VectorAssembler(inputCols=colNameList,outputCol="features").transform(sparksNuclearPlantsSmall)
 
 # Split the data into training and test sets (30% held out for testing)
 (trainingData, testData) = sparksNuclearPlantsSmall.randomSplit([0.7, 0.3])
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 
-# Change into this
-#https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
+
 
 # Instance of Decision tree classifier
-treeClf = DecisionTreeClassifier(labelCol="statusIndexedLabel", featuresCol="features")
+# treeClf = DecisionTreeClassifier(labelCol="statusIndexedLabel", featuresCol="features")
 
 # Link the indexers and tree into a pipeline
 # Pipeline to create stages
 # Ensuring data goes through identical processing steps
-pipeline = Pipeline(stages=[labelIndexer, featuresIndexer, treeClf])
+# pipeline = Pipeline(stages=[labelIndexer, featuresIndexer, treeClf])
+
+
+pipeline = Pipeline(stages = stages)
+pipelineModel = pipeline.fit(sparksNuclearPlantsSmall)
+df = pipelineModel.transform(sparksNuclearPlantsSmall)
+selectedCols = ['label', 'features'] + cols
+df = df.select(selectedCols)
+df.printSchema()
 
 # Train model, pipeline estimator stage which produces a model which is a transformer. Running the indexer through the stages
-treeModel = pipeline.fit(trainingData)
+# treeModel = pipeline.fit(trainingData)
 
 # Predict results, pipeline transformer stage where the model makes the predictions from the dataset
-predictions = treeModel.transform(testData)
+# predictions = treeModel.transform(testData)
 
 # Select example rows to display.
-predictions.select("prediction", "indexedLabel", "features").show(5)
+# predictions.select("prediction", "indexedLabel", "features").show(5)
 
 # Compute error rate
-evaluator = MulticlassClassificationEvaluator(labelCol="indexedLabel", predictionCol="prediction", metricName="precision")
-accuracy = evaluator.evaluate(predictions)
-print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
+# evaluator = MulticlassClassificationEvaluator(labelCol="indexedLabel", predictionCol="prediction", metricName="precision")
+# accuracy = evaluator.evaluate(predictions)
+# print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
 
-treeModelShow = treeModel.stages[2]
-print (treeModelShow) 
+# treeModelShow = treeModel.stages[2]
+# print (treeModelShow) 
 
 
 
