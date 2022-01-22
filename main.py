@@ -103,7 +103,7 @@ colNameList = sparksNuclearPlantsSmall.schema.names
 stages = []
 cols = sparksNuclearPlantsSmall.columns
 
-for im in colNameList:
+for columns in colNameList:
     stringIndexer = StringIndexer(inputCol = columns, outputCol = columns + 'Index')
     stages += [stringIndexer]
 
