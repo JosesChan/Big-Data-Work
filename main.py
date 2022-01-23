@@ -19,7 +19,7 @@ spark = SparkSession.builder.getOrCreate()
 
 # Read csv file into spark
 pandasNuclearPlantsSmall = pandas.read_csv("dataset/nuclear_plants_small_dataset.csv")
-sparksNuclearPlantsSmall=spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
+sparksNuclearPlantsSmall= spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
 
 # Task 1: Check to see if there are any missing values
 # null values in each column
@@ -94,7 +94,6 @@ labelIndexer = StringIndexer(inputCol="Status", outputCol="statusIndexedLabel").
 # (Continous instead of discrete, infinite number of values between two values) (Status label has 2 distinct known values currently, can be considered discrete
 
 colNameList = sparksNuclearPlantsSmall.schema.names
-
 stages = []
 cols = sparksNuclearPlantsSmall.columns
 
@@ -136,29 +135,25 @@ stages += [normalizer]
 pipeline = Pipeline(stages = stages)
 pipelineModel = pipeline.fit(sparksNuclearPlantsSmall)
 df = pipelineModel.transform(sparksNuclearPlantsSmall)
-selectedCols = ['label', 'normFeatures'] + cols
+selectedCols = ['label', 'features'] + cols
 df = df.select(selectedCols)
 df.printSchema()
 
 # Split the data into training and test sets (30% held out for testing)
 (trainingData, testData) = df.randomSplit([0.7, 0.3])
 
-dt = DecisionTreeClassifier(featuresCol = 'normFeatures', labelCol = 'label', maxDepth = 3)
-dtModel = dt.fit(trainingData)
-predictions = dtModel.transform(testData)
-predictions.select(colNameList[0],colNameList[1],colNameList[2],'rawPrediction', 'prediction', 'probability').show(10)
+decisionTreeInst = DecisionTreeClassifier(featuresCol = 'features', labelCol = 'label')
 
-
-# Train model, pipeline estimator stage which produces a model which is a transformer. Running the indexer through the stages
-# treeModel = pipeline.fit(trainingData)
+# Train model, pipeline estimator stage producing model by fitting data onto class
+decisionTreeModel = decisionTreeInst.fit(trainingData)
 
 # Predict results, pipeline transformer stage where the model makes the predictions from the dataset
-# predictions = treeModel.transform(testData)
+predictions = decisionTreeModel.transform(testData)
 
 # Select example rows to display.
-# predictions.select("prediction", "indexedLabel", "features").show(5)
+predictions.select(colNameList[0],colNameList[1],colNameList[2],'rawPrediction', 'prediction', 'probability').show(10)
 
-# # Compute error rate
+# Compute error rate
 evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
 accuracy = evaluator.evaluate(predictions)
 print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
