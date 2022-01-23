@@ -1,18 +1,15 @@
 from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
-from pyspark.mllib.tree import DecisionTree, DecisionTreeModel
-from pyspark.mllib.util import MLUtils
 from pyspark.ml import Pipeline
-from pyspark.ml.classification import DecisionTreeClassifier
-from pyspark.ml.feature import StringIndexer, VectorAssembler
-from pyspark.ml.evaluation import MulticlassClassificationEvaluator
-from pyspark.mllib.util import MLUtils
+from pyspark.ml.classification import DecisionTreeClassifier 
+from pyspark.ml.feature import StringIndexer, VectorAssembler, Normalizer, OneHotEncoder
+from pyspark.ml.evaluation import MulticlassClassificationEvaluator, BinaryClassificationEvaluator
+from pyspark.ml.linalg import Vectors
+from pyspark.mllib.evaluation import BinaryClassificationMetrics, MulticlassMetrics
 from pyspark.mllib.classification import SVMWithSGD, SVMModel
 from pyspark.mllib.regression import LabeledPoint
-from pyspark.ml.linalg import Vectors
-from pyspark.ml.feature import OneHotEncoder
-from pyspark.ml.evaluation import BinaryClassificationEvaluator
-from pyspark.mllib.evaluation import BinaryClassificationMetrics, MulticlassMetrics
+from pyspark.mllib.tree import DecisionTree, DecisionTreeModel
+from pyspark.mllib.util import MLUtils
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
@@ -23,8 +20,6 @@ spark = SparkSession.builder.getOrCreate()
 # Read csv file into spark
 pandasNuclearPlantsSmall = pandas.read_csv("dataset/nuclear_plants_small_dataset.csv")
 sparksNuclearPlantsSmall=spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
-
-
 
 # Task 1: Check to see if there are any missing values
 # null values in each column
@@ -103,6 +98,8 @@ colNameList = sparksNuclearPlantsSmall.schema.names
 stages = []
 cols = sparksNuclearPlantsSmall.columns
 
+# Feature extractor
+# String Indexer
 for columns in colNameList:
     stringIndexer = StringIndexer(inputCol = columns, outputCol = columns + 'Index')
     stages += [stringIndexer]
@@ -110,16 +107,22 @@ for columns in colNameList:
 label_stringIdx = StringIndexer(inputCol = 'Status', outputCol = 'label')
 stages += [label_stringIdx]
 numericColsNameList = (sparksNuclearPlantsSmall.drop("Status")).schema.names
+
+# Feature transformer
+# Vector Assembler
 assembler = VectorAssembler(inputCols=numericColsNameList, outputCol="features")
 stages += [assembler]
+
+
+# Normalize each Vector using $L^1$ norm.
+normalizer = Normalizer(inputCol="features", outputCol="normFeatures", p=float("inf"))
+stages += [normalizer]
 
 
 # featuresIndexer = VectorAssembler(inputCols=colNameList,outputCol="features").transform(sparksNuclearPlantsSmall)
 
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
-
-
 
 # Instance of Decision tree classifier
 # treeClf = DecisionTreeClassifier(labelCol="statusIndexedLabel", featuresCol="features")
@@ -133,14 +136,14 @@ stages += [assembler]
 pipeline = Pipeline(stages = stages)
 pipelineModel = pipeline.fit(sparksNuclearPlantsSmall)
 df = pipelineModel.transform(sparksNuclearPlantsSmall)
-selectedCols = ['label', 'features'] + cols
+selectedCols = ['label', 'normFeatures'] + cols
 df = df.select(selectedCols)
 df.printSchema()
 
 # Split the data into training and test sets (30% held out for testing)
 (trainingData, testData) = df.randomSplit([0.7, 0.3])
 
-dt = DecisionTreeClassifier(featuresCol = 'features', labelCol = 'label', maxDepth = 3)
+dt = DecisionTreeClassifier(featuresCol = 'normFeatures', labelCol = 'label', maxDepth = 3)
 dtModel = dt.fit(trainingData)
 predictions = dtModel.transform(testData)
 predictions.select(colNameList[0],colNameList[1],colNameList[2],'rawPrediction', 'prediction', 'probability').show(10)
