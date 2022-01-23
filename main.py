@@ -156,44 +156,27 @@ print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
 
 
 # Instance of Support Vector Machines classifier
-# svmClf = svm.SVC()
-# svmClf.fit(xTrain, yTrain)
-# yPredictSvmClf = svmClf.predict(xTest)
-# accuracy = zero_one_loss(yTest, yPredictSvmClf)
-# svmErrorRate = 1 - accuracy
-
-# Define your classifier
 svmClf = LinearSVC(maxIter=10, regParam=0.1)
-
-# Fit the model
+# Train model, pipeline estimator stage producing model by fitting data onto class
 lsvcModel = svmClf.fit(trainingData)
-
-# Compute predictions for test data
+# Predict results, pipeline transformer stage where the model makes the predictions from the dataset
 predictions = lsvcModel.transform(testData)
-
-# Print the coefficients and intercept for linearsSVC
-coefficients = lsvcModel.coefficients
-intercept = lsvcModel.intercept
-print("Some coefficients: " + str(coefficients[250:300]))
-print("Intercept: " + str(intercept))
-
+# Compute error rate
 # Show the computed predictions and compare with the original labels
 predictions.select("features", "label", "prediction").show(10)
-
 # Define the evaluator method with the corresponding metric and compute the classification error on test data
 evaluator = MulticlassClassificationEvaluator().setMetricName('accuracy')
 accuracy = evaluator.evaluate(predictions) 
-
 # Show the accuracy
-print("Test accuracy = %g" % (accuracy))
+print ("Support Vector Machine Test Error = %g" % (1.0 - accuracy))
 
 
 # Instance of multilayer perceptron, type of artificial neural network
-annClf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
-annClf.fit(xTrain, yTrain)
-yPredictAnnClf = annClf.predict(xTest)
-accuracy = zero_one_loss(yTest, yPredictAnnClf)
-annErrorRate = 1 - accuracy
+# annClf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+# annClf.fit(xTrain, yTrain)
+# yPredictAnnClf = annClf.predict(xTest)
+# accuracy = zero_one_loss(yTest, yPredictAnnClf)
+# annErrorRate = 1 - accuracy
 
 
 # # Task 6: Compare results based on task 5, which is best
