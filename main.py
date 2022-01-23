@@ -1,7 +1,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
-from pyspark.ml.classification import DecisionTreeClassifier 
+from pyspark.ml.classification import DecisionTreeClassifier, LinearSVC
 from pyspark.ml.feature import StringIndexer, VectorAssembler, Normalizer, OneHotEncoder
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator, BinaryClassificationEvaluator
 from pyspark.ml.linalg import Vectors
@@ -88,14 +88,12 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 # Fit the entire dataset, including all labels in index
 labelIndexer = StringIndexer(inputCol="Status", outputCol="statusIndexedLabel").fit(sparksNuclearPlantsSmall)
 
-# Inputting x value
-# Automatically identify categorical features, and index them seperately.
-# Using maxCategories, we can select features with > 4 distinct values to be treated as continuous 
-# (Continous instead of discrete, infinite number of values between two values) (Status label has 2 distinct known values currently, can be considered discrete
-
+# Store list of original column names and data held by the columns
 colNameList = sparksNuclearPlantsSmall.schema.names
-stages = []
 cols = sparksNuclearPlantsSmall.columns
+
+# Link the stages into a pipeline
+stages = []
 
 # Feature extractor
 # String Indexer
@@ -112,26 +110,12 @@ numericColsNameList = (sparksNuclearPlantsSmall.drop("Status")).schema.names
 assembler = VectorAssembler(inputCols=numericColsNameList, outputCol="features")
 stages += [assembler]
 
-
 # Normalize each Vector using $L^1$ norm.
 normalizer = Normalizer(inputCol="features", outputCol="normFeatures", p=float("inf"))
 stages += [normalizer]
 
-
-# featuresIndexer = VectorAssembler(inputCols=colNameList,outputCol="features").transform(sparksNuclearPlantsSmall)
-
-
-# Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
-
-# Instance of Decision tree classifier
-# treeClf = DecisionTreeClassifier(labelCol="statusIndexedLabel", featuresCol="features")
-
-# Link the indexers and tree into a pipeline
 # Pipeline to create stages
 # Ensuring data goes through identical processing steps
-# pipeline = Pipeline(stages=[labelIndexer, featuresIndexer, treeClf])
-
-
 pipeline = Pipeline(stages = stages)
 pipelineModel = pipeline.fit(sparksNuclearPlantsSmall)
 df = pipelineModel.transform(sparksNuclearPlantsSmall)
@@ -142,27 +126,23 @@ df.printSchema()
 # Split the data into training and test sets (30% held out for testing)
 (trainingData, testData) = df.randomSplit([0.7, 0.3])
 
-decisionTreeInst = DecisionTreeClassifier(featuresCol = 'features', labelCol = 'label')
+# Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 
+# Instance of Decision tree classifier
+treeClf = DecisionTreeClassifier(featuresCol = 'features', labelCol = 'label')
 # Train model, pipeline estimator stage producing model by fitting data onto class
-decisionTreeModel = decisionTreeInst.fit(trainingData)
-
+decisionTreeModel = treeClf.fit(trainingData)
 # Predict results, pipeline transformer stage where the model makes the predictions from the dataset
 predictions = decisionTreeModel.transform(testData)
-
 # Select example rows to display.
 predictions.select(colNameList[0],colNameList[1],colNameList[2],'rawPrediction', 'prediction', 'probability').show(10)
-
 # Compute error rate
 evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
 accuracy = evaluator.evaluate(predictions)
 print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
 
 
-# treeModelShow = treeModel.stages[2]
-# print (treeModelShow) 
-
-# # Build the model
+# Build the model
 # svmModel = SVMWithSGD.train(trainingData, iterations=100)
 
 # # Evaluating the model on training data
@@ -175,19 +155,45 @@ print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
 # sameModel = SVMModel.load(sc, "target/tmp/pythonSVMWithSGDModel")
 
 
-# # Instance of Support Vector Machines classifier
+# Instance of Support Vector Machines classifier
 # svmClf = svm.SVC()
 # svmClf.fit(xTrain, yTrain)
 # yPredictSvmClf = svmClf.predict(xTest)
 # accuracy = zero_one_loss(yTest, yPredictSvmClf)
 # svmErrorRate = 1 - accuracy
 
-# # Instance of multilayer perceptron, type of artificial neural network
-# annClf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
-# annClf.fit(xTrain, yTrain)
-# yPredictAnnClf = annClf.predict(xTest)
-# accuracy = zero_one_loss(yTest, yPredictAnnClf)
-# annErrorRate = 1 - accuracy
+# Define your classifier
+svmClf = LinearSVC(maxIter=10, regParam=0.1)
+
+# Fit the model
+lsvcModel = svmClf.fit(trainingData)
+
+# Compute predictions for test data
+predictions = lsvcModel.transform(testData)
+
+# Print the coefficients and intercept for linearsSVC
+coefficients = lsvcModel.coefficients
+intercept = lsvcModel.intercept
+print("Some coefficients: " + str(coefficients[250:300]))
+print("Intercept: " + str(intercept))
+
+# Show the computed predictions and compare with the original labels
+predictions.select("features", "label", "prediction").show(10)
+
+# Define the evaluator method with the corresponding metric and compute the classification error on test data
+evaluator = MulticlassClassificationEvaluator().setMetricName('accuracy')
+accuracy = evaluator.evaluate(predictions) 
+
+# Show the accuracy
+print("Test accuracy = %g" % (accuracy))
+
+
+# Instance of multilayer perceptron, type of artificial neural network
+annClf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
+annClf.fit(xTrain, yTrain)
+yPredictAnnClf = annClf.predict(xTest)
+accuracy = zero_one_loss(yTest, yPredictAnnClf)
+annErrorRate = 1 - accuracy
 
 
 # # Task 6: Compare results based on task 5, which is best
