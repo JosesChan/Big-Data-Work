@@ -2,7 +2,7 @@ from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
 from pyspark.ml.classification import DecisionTreeClassifier, LinearSVC, MultilayerPerceptronClassifier
-from pyspark.ml.feature import StringIndexer, VectorAssembler, Normalizer, OneHotEncoder
+from pyspark.ml.feature import StringIndexer, VectorAssembler, Normalizer, OneHotEncoder, RobustScaler
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator, BinaryClassificationEvaluator
 from pyspark.ml.linalg import Vectors
 from pyspark.mllib.evaluation import BinaryClassificationMetrics, MulticlassMetrics
@@ -32,44 +32,47 @@ sparksNuclearPlantsSmall= spark.read.csv("dataset/nuclear_plants_small_dataset.c
 #     print(dataframeNaN)
 
 # Task 2: Normal Group and Abnormal Group, find min, max, mean, median, mode, variance and boxplot
-# featureNames = pandasNuclearPlantsSmall.drop(["Status"],axis = 1).columns.values
+featureNames = pandasNuclearPlantsSmall.drop(["Status"],axis = 1).columns.values
 
-# pandasNormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Normal"]
-# pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Abnormal"]
+pandasNormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Normal"]
+pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Abnormal"]
 
 
 # for i in featureNames:
 #     plt.figure()
 #     seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
 #     print("Normal" + i)
-#     print("MINIMUM: \") 
+#     print("MINIMUM: \n") 
 #     print(pandasNormalNuclearPlantsSmall[i].max())
-#     print("MAX: \") 
+#     print("MAX: \n") 
 #     print(pandasNormalNuclearPlantsSmall[i].min())
-#     print("MEAN: \") 
+#     print("MEAN: \n") 
 #     print(pandasNormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN: \") 
+#     print("MEDIAN: \n") 
 #     print(pandasNormalNuclearPlantsSmall[i].median())
-#     print("MODE: \") 
+#     print("MODE: \n") 
 #     print(pandasNormalNuclearPlantsSmall[i].mode())
-#     print("VAR: \") 
+#     print("VAR: \n") 
 #     print(pandasNormalNuclearPlantsSmall[i].var())
 #     print("Abnormal "+ i)
-#     print("MINIMUM: \") 
+#     print("MINIMUM: \n") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].max())
-#     print("MAX: \") 
+#     print("MAX: \n") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].min())
-#     print("MEAN: \") 
+#     print("MEAN: \n") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN: \") 
+#     print("MEDIAN: \n") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].median())
-#     print("MODE: \") 
+#     print("MODE: \n") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].mode())
-#     print("VAR: \") 
+#     print("VAR: \n") 
 #     print(pandasAbnormalNuclearPlantsSmall[i].var())
 #     print()
 #     plt.savefig('Graph '+i)
 # plt.show()
+
+# Data shows a large amount of outliers that can affect the calculations, robustscaler should be used
+
 
 # Task 3: Show in a table the correlation matrix, where each element shows correlation between two features, find highly correlated features.
 
@@ -91,6 +94,7 @@ labelIndexer = StringIndexer(inputCol="Status", outputCol="statusIndexedLabel").
 # Store list of original column names and data held by the columns
 colNameList = sparksNuclearPlantsSmall.schema.names
 cols = sparksNuclearPlantsSmall.columns
+seedNumber = 1234
 
 # Link the stages into a pipeline
 stages = []
@@ -110,32 +114,39 @@ numericColsNameList = (sparksNuclearPlantsSmall.drop("Status")).schema.names
 assembler = VectorAssembler(inputCols=numericColsNameList, outputCol="features")
 stages += [assembler]
 
+# Robust Scaler, an estimator that 
+scaler = RobustScaler(inputCol="features", outputCol="scaledFeatures", withScaling=True, withCentering=False, lower=0.25, upper=0.75)
+stages += [scaler]
+
 # Normalize each Vector using $L^1$ norm.
 normalizer = Normalizer(inputCol="features", outputCol="normFeatures", p=(2))
 stages += [normalizer]
+
+# Normalize each Vector using $L^1$ norm.
+normalizerScaled = Normalizer(inputCol="scaledFeatures", outputCol="normRobScaleFeatures", p=(2))
+stages += [normalizerScaled]
+
 
 # Pipeline to create stages
 # Ensuring data goes through identical processing steps
 pipeline = Pipeline(stages = stages)
 pipelineModel = pipeline.fit(sparksNuclearPlantsSmall)
 df = pipelineModel.transform(sparksNuclearPlantsSmall)
-selectedCols = ['label', 'features', 'normFeatures'] + cols
+selectedCols = ['label', 'features', 'normFeatures', 'scaledFeatures', 'normRobScaleFeatures'] + cols
 df = df.select(selectedCols)
-df.printSchema()
+# df.printSchema()
 
 # Split the data into training and test sets (30% held out for testing)
-(trainingData, testData) = df.randomSplit([0.7, 0.3], seed=1234)
+(trainingData, testData) = df.randomSplit([0.7, 0.3], seed=seedNumber)
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 
 # Instance of Decision tree classifier
-treeClf = DecisionTreeClassifier(featuresCol = 'features', labelCol = 'label')
+treeClf = DecisionTreeClassifier(featuresCol = 'normFeatures', labelCol = 'label')
 # Train model, pipeline estimator stage producing model by fitting data onto class
 decisionTreeModel = treeClf.fit(trainingData)
 # Predict results, pipeline transformer stage where the model makes the predictions from the dataset
 predictions = decisionTreeModel.transform(testData)
-# Select example rows to display.
-predictions.select(colNameList[0],colNameList[1],colNameList[2],'rawPrediction', 'prediction', 'probability').show(10)
 # Compute error rate
 evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
 accuracy = evaluator.evaluate(predictions)
@@ -162,9 +173,6 @@ lsvcModel = svmClf.fit(trainingData)
 # Predict results, pipeline transformer stage where the model makes the predictions from the dataset
 predictions = lsvcModel.transform(testData)
 # Compute error rate
-# Show the computed predictions and compare with the original labels
-predictions.select("features", "label", "prediction").show(10)
-# Define the evaluator method with the corresponding metric and compute the classification error on test data
 evaluator = MulticlassClassificationEvaluator().setMetricName('accuracy')
 accuracy = evaluator.evaluate(predictions) 
 # Show the accuracy
@@ -177,7 +185,7 @@ print ("Support Vector Machine Test Error = %g" % (1.0 - accuracy))
 # and output of size 2 (classes)
 layers = [12, 8, 8, 2]
 
-annClf = MultilayerPerceptronClassifier(featuresCol = 'normFeatures', labelCol = 'label', layers=layers, seed=1234)
+annClf = MultilayerPerceptronClassifier(featuresCol = 'normFeatures', labelCol = 'label', layers=layers, seed=seedNumber)
 annModel = annClf.fit(trainingData)
 predictions = annModel.transform(testData)
 accuracy = evaluator.evaluate(predictions) 
@@ -186,10 +194,6 @@ annErrorRate = 1 - accuracy
 print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 
 # # Task 6: Compare results based on task 5, which is best
-
-# print("Error rate for decision tree" + treeErrorRate)
-# print("Error rate for support vector machines" + svmErrorRate)
-# print("Error rate for artificial neural network" + annErrorRate)
 
 # Task 7: Discuss if features can detect abnormality in reactors
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
