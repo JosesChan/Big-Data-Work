@@ -142,7 +142,7 @@ df = df.select(selectedCols)
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 
 # Instance of Decision tree classifier
-treeClf = DecisionTreeClassifier(featuresCol = 'normFeatures', labelCol = 'label')
+treeClf = DecisionTreeClassifier(featuresCol = 'scaledFeatures', labelCol = 'label')
 # Train model, pipeline estimator stage producing model by fitting data onto class
 decisionTreeModel = treeClf.fit(trainingData)
 # Predict results, pipeline transformer stage where the model makes the predictions from the dataset
@@ -152,22 +152,8 @@ evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="p
 accuracy = evaluator.evaluate(predictions)
 print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
 
-
-# Build the model
-# svmModel = SVMWithSGD.train(trainingData, iterations=100)
-
-# # Evaluating the model on training data
-# labelsAndPreds = parsedData.map(lambda p: (p.label, model.predict(p.features)))
-# trainErr = labelsAndPreds.filter(lambda lp: lp[0] != lp[1]).count() / float(parsedData.count())
-# print("Training Error = " + str(trainErr))
-
-# # Save and load model
-# svmModel.save(sc, "target/tmp/pythonSVMWithSGDModel")
-# sameModel = SVMModel.load(sc, "target/tmp/pythonSVMWithSGDModel")
-
-
 # Instance of Support Vector Machines classifier
-svmClf = LinearSVC(featuresCol = 'normFeatures', labelCol = 'label')
+svmClf = LinearSVC(featuresCol = 'scaledFeatures', labelCol = 'label')
 # Train model, pipeline estimator stage producing model by fitting data onto class
 lsvcModel = svmClf.fit(trainingData)
 # Predict results, pipeline transformer stage where the model makes the predictions from the dataset
@@ -180,12 +166,10 @@ print ("Support Vector Machine Test Error = %g" % (1.0 - accuracy))
 
 
 # Instance of multilayer perceptron, type of artificial neural network
-
-# input layer of size 12 (features), two intermediate of size 5 and 4
-# and output of size 2 (classes)
+# input layer of size 12 (features), 2 hidden layers of size 8 and output of size 2 (classes)
 layers = [12, 8, 8, 2]
 
-annClf = MultilayerPerceptronClassifier(featuresCol = 'normFeatures', labelCol = 'label', layers=layers, seed=seedNumber)
+annClf = MultilayerPerceptronClassifier(featuresCol = 'scaledFeatures', labelCol = 'label', layers=layers, seed=seedNumber)
 annModel = annClf.fit(trainingData)
 predictions = annModel.transform(testData)
 accuracy = evaluator.evaluate(predictions) 
@@ -196,5 +180,6 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 # # Task 6: Compare results based on task 5, which is best
 
 # Task 7: Discuss if features can detect abnormality in reactors
+
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
 
