@@ -1,7 +1,7 @@
 from pyspark.sql.functions import *
 from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
-from pyspark.ml.classification import DecisionTreeClassifier, LinearSVC
+from pyspark.ml.classification import DecisionTreeClassifier, LinearSVC, MultilayerPerceptronClassifier
 from pyspark.ml.feature import StringIndexer, VectorAssembler, Normalizer, OneHotEncoder
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator, BinaryClassificationEvaluator
 from pyspark.ml.linalg import Vectors
@@ -24,21 +24,21 @@ sparksNuclearPlantsSmall= spark.read.csv("dataset/nuclear_plants_small_dataset.c
 # Task 1: Check to see if there are any missing values
 # null values in each column
 
-dataframeNaN = pandasNuclearPlantsSmall[pandasNuclearPlantsSmall.isna().any(axis=1)]
-if(dataframeNaN.empty):
-    print("No null values")
-else:
-    print("Null values\n")
-    print(dataframeNaN)
+# dataframeNaN = pandasNuclearPlantsSmall[pandasNuclearPlantsSmall.isna().any(axis=1)]
+# if(dataframeNaN.empty):
+#     print("No null values")
+# else:
+#     print("Null values\n")
+#     print(dataframeNaN)
 
 # Task 2: Normal Group and Abnormal Group, find min, max, mean, median, mode, variance and boxplot
-columnNames = pandasNuclearPlantsSmall.drop(["Status"],axis = 1).columns.values
+# featureNames = pandasNuclearPlantsSmall.drop(["Status"],axis = 1).columns.values
 
-pandasNormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Normal"]
-pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Abnormal"]
+# pandasNormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Normal"]
+# pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Abnormal"]
 
 
-# for i in columnNames:
+# for i in featureNames:
 #     plt.figure()
 #     seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
 #     print("Normal" + i)
@@ -111,7 +111,7 @@ assembler = VectorAssembler(inputCols=numericColsNameList, outputCol="features")
 stages += [assembler]
 
 # Normalize each Vector using $L^1$ norm.
-normalizer = Normalizer(inputCol="features", outputCol="normFeatures", p=float("inf"))
+normalizer = Normalizer(inputCol="features", outputCol="normFeatures", p=(2))
 stages += [normalizer]
 
 # Pipeline to create stages
@@ -119,12 +119,12 @@ stages += [normalizer]
 pipeline = Pipeline(stages = stages)
 pipelineModel = pipeline.fit(sparksNuclearPlantsSmall)
 df = pipelineModel.transform(sparksNuclearPlantsSmall)
-selectedCols = ['label', 'features'] + cols
+selectedCols = ['label', 'features', 'normFeatures'] + cols
 df = df.select(selectedCols)
 df.printSchema()
 
 # Split the data into training and test sets (30% held out for testing)
-(trainingData, testData) = df.randomSplit([0.7, 0.3])
+(trainingData, testData) = df.randomSplit([0.7, 0.3], seed=1234)
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 
@@ -156,7 +156,7 @@ print ("Decision Tree Test Error = %g" % (1.0 - accuracy))
 
 
 # Instance of Support Vector Machines classifier
-svmClf = LinearSVC(maxIter=10, regParam=0.1)
+svmClf = LinearSVC(featuresCol = 'normFeatures', labelCol = 'label')
 # Train model, pipeline estimator stage producing model by fitting data onto class
 lsvcModel = svmClf.fit(trainingData)
 # Predict results, pipeline transformer stage where the model makes the predictions from the dataset
@@ -172,12 +172,18 @@ print ("Support Vector Machine Test Error = %g" % (1.0 - accuracy))
 
 
 # Instance of multilayer perceptron, type of artificial neural network
-# annClf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(5, 2), random_state=1)
-# annClf.fit(xTrain, yTrain)
-# yPredictAnnClf = annClf.predict(xTest)
-# accuracy = zero_one_loss(yTest, yPredictAnnClf)
-# annErrorRate = 1 - accuracy
 
+# input layer of size 12 (features), two intermediate of size 5 and 4
+# and output of size 2 (classes)
+layers = [12, 8, 8, 2]
+
+annClf = MultilayerPerceptronClassifier(featuresCol = 'normFeatures', labelCol = 'label', layers=layers, seed=1234)
+annModel = annClf.fit(trainingData)
+predictions = annModel.transform(testData)
+accuracy = evaluator.evaluate(predictions) 
+annErrorRate = 1 - accuracy
+# Show the accuracy
+print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 
 # # Task 6: Compare results based on task 5, which is best
 
