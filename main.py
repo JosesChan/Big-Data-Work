@@ -10,10 +10,12 @@ from pyspark.mllib.classification import SVMWithSGD, SVMModel
 from pyspark.mllib.regression import LabeledPoint
 from pyspark.mllib.tree import DecisionTree, DecisionTreeModel
 from pyspark.mllib.util import MLUtils
+import pyspark.SparkContext
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
 import pyspark.sql.functions
+
 
 spark = SparkSession.builder.getOrCreate()
 
@@ -86,10 +88,6 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 # References
 #https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
 #https://towardsdatascience.com/machine-learning-with-pyspark-and-mllib-solving-a-binary-classification-problem-96396065d2aa
-
-# Index labels, adding metadata (for identification) to the label column
-# Fit the entire dataset, including all labels in index
-labelIndexer = StringIndexer(inputCol="Status", outputCol="statusIndexedLabel").fit(sparksNuclearPlantsSmall)
 
 # Store list of original column names and data held by the columns
 colNameList = sparksNuclearPlantsSmall.schema.names
@@ -183,3 +181,40 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
 
+# mapper: splits a single tweet string into words, cleans them, and returns a Counter
+
+
+# MapReduce
+def reduceFunc(accum, n):
+    print(accum, n)
+    if accum[1] > n[1]:
+        return(n)
+    else: return(accum)
+
+def mapFunc(lines):
+    return (lines[0], lines[1])
+
+rdd = sc.parallelize([("Mumbai", 19, 30),
+    ("Delhi", 5, 41),
+    ("Kolkata", 20, 40),
+    ("Mumbai", 18, 35),
+    ("Delhi", 4, 42),
+    ("Delhi", 10, 44),
+    ("Kolkata", 19, 39)])
+
+rdd.map(mapFunc).keyBy(lambda x: x[0]).reduceByKey(reduceFunc).map(lambda x : x[1]).collect()
+
+
+dfMap = sparksNuclearPlantsSmall.map(lambda x: (x[0], tuple(x[1:])))
+
+cityTempMin = dfMap.reduceByKey(lambda x, y: min(x[0],y[0]))
+
+cityTempMin.collect()
+
+
+#  map (in_key, in_value) -> list (out_key, intermediate_value
+
+# ● reduce (out_key, list(intermediate_value)) -> list (out_value)
+
+# reducer: merges two Counter objects given as arguments (hint: use update)
+# chunk_mapper: applies mapper and reducer to a given chunk of tweets, and returns the result
