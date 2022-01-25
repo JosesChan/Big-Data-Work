@@ -1,4 +1,5 @@
 from pyspark.sql.functions import *
+from pyspark import SparkContext
 from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
 from pyspark.ml.classification import DecisionTreeClassifier, LinearSVC, MultilayerPerceptronClassifier
@@ -194,13 +195,7 @@ def reduceFunc(accum, n):
 def mapFunc(lines):
     return (lines[0], lines[1])
 
-rdd = sc.parallelize([("Mumbai", 19, 30),
-    ("Delhi", 5, 41),
-    ("Kolkata", 20, 40),
-    ("Mumbai", 18, 35),
-    ("Delhi", 4, 42),
-    ("Delhi", 10, 44),
-    ("Kolkata", 19, 39)])
+rdd = SparkContext.parallelize(sparksNuclearPlantsSmall)
 
 rdd.map(mapFunc).keyBy(lambda x: x[0]).reduceByKey(reduceFunc).map(lambda x : x[1]).collect()
 
