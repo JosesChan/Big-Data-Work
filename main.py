@@ -1,5 +1,5 @@
 from pyspark.sql.functions import *
-from pyspark import SparkContext
+from pyspark import RDD, SparkContext
 from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
 from pyspark.ml.classification import DecisionTreeClassifier, LinearSVC, MultilayerPerceptronClassifier
@@ -11,7 +11,7 @@ from pyspark.mllib.classification import SVMWithSGD, SVMModel
 from pyspark.mllib.regression import LabeledPoint
 from pyspark.mllib.tree import DecisionTree, DecisionTreeModel
 from pyspark.mllib.util import MLUtils
-import pyspark.SparkContext
+
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
@@ -23,6 +23,9 @@ spark = SparkSession.builder.getOrCreate()
 # Read csv file into spark
 pandasNuclearPlantsSmall = pandas.read_csv("dataset/nuclear_plants_small_dataset.csv")
 sparksNuclearPlantsSmall= spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
+# sparksNuclearPlantsLarge = spark.read.csv("dataset/nuclear_plants_large_dataset.csv", header=True,inferSchema=True)
+
+
 
 # Task 1: Check to see if there are any missing values
 # null values in each column
@@ -41,38 +44,38 @@ pandasNormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlant
 pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Abnormal"]
 
 
-# for i in featureNames:
-#     plt.figure()
-#     seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
-#     print("Normal" + i)
-#     print("MINIMUM: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].max())
-#     print("MAX: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].min())
-#     print("MEAN: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].median())
-#     print("MODE: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].mode())
-#     print("VAR: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].var())
-#     print("Abnormal "+ i)
-#     print("MINIMUM: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].max())
-#     print("MAX: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].min())
-#     print("MEAN: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].median())
-#     print("MODE: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].mode())
-#     print("VAR: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].var())
-#     print()
-#     plt.savefig('Graph '+i)
-# plt.show()
+for i in featureNames:
+    plt.figure()
+    seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
+    print("Normal" + i)
+    print("MINIMUM: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].max())
+    print("MAX: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].min())
+    print("MEAN: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].mean())
+    print("MEDIAN: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].median())
+    print("MODE: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].mode())
+    print("VAR: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].var())
+    print("Abnormal "+ i)
+    print("MINIMUM: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].max())
+    print("MAX: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].min())
+    print("MEAN: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].mean())
+    print("MEDIAN: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].median())
+    print("MODE: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].mode())
+    print("VAR: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].var())
+    print()
+    plt.savefig('Graph '+i)
+plt.show()
 
 # Data shows a large amount of outliers that can affect the calculations, robustscaler should be used
 
@@ -89,6 +92,7 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 # References
 #https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
 #https://towardsdatascience.com/machine-learning-with-pyspark-and-mllib-solving-a-binary-classification-problem-96396065d2aa
+#https://uk.mathworks.com/help/matlab/import_export/compute-mean-value-with-mapreduce.html
 
 # Store list of original column names and data held by the columns
 colNameList = sparksNuclearPlantsSmall.schema.names
@@ -181,30 +185,41 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 # Task 7: Discuss if features can detect abnormality in reactors
 
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
+nuclearRdd:RDD[12] = SparkContext.parellelize(sparksNuclearPlantsSmall.drop["Status"])
+# Count of feature size
+size
+
+# Mean/Average = Sum of elements/Total number of elements
+nuclearRdd.reduce((sum,x)->sum+x/size)
+
+# Minimum
+
+# Maximum
+
 
 # mapper: splits a single tweet string into words, cleans them, and returns a Counter
 
 
 # MapReduce
-def reduceFunc(accum, n):
-    print(accum, n)
-    if accum[1] > n[1]:
-        return(n)
-    else: return(accum)
+# def reduceFunc(accum, n):
+#     print(accum, n)
+#     if accum[1] > n[1]:
+#         return(n)
+#     else: return(accum)
 
-def mapFunc(lines):
-    return (lines[0], lines[1])
+# def mapFunc(lines):
+#     return (lines[0], lines[1])
 
-rdd = SparkContext.parallelize(sparksNuclearPlantsSmall)
+# rdd = SparkContext.parallelize(sparksNuclearPlantsSmall)
 
-rdd.map(mapFunc).keyBy(lambda x: x[0]).reduceByKey(reduceFunc).map(lambda x : x[1]).collect()
+# rdd.map(mapFunc).keyBy(lambda x: x[0]).reduceByKey(reduceFunc).map(lambda x : x[1]).collect()
 
 
-dfMap = sparksNuclearPlantsSmall.map(lambda x: (x[0], tuple(x[1:])))
+# dfMap = sparksNuclearPlantsSmall.map(lambda x: (x[0], tuple(x[1:])))
 
-cityTempMin = dfMap.reduceByKey(lambda x, y: min(x[0],y[0]))
+# cityTempMin = dfMap.reduceByKey(lambda x, y: min(x[0],y[0]))
 
-cityTempMin.collect()
+# cityTempMin.collect()
 
 
 #  map (in_key, in_value) -> list (out_key, intermediate_value
