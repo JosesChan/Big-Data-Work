@@ -44,38 +44,38 @@ pandasNormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlant
 pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Abnormal"]
 
 
-for i in featureNames:
-    plt.figure()
-    seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
-    print("Normal" + i)
-    print("MINIMUM: \n") 
-    print(pandasNormalNuclearPlantsSmall[i].max())
-    print("MAX: \n") 
-    print(pandasNormalNuclearPlantsSmall[i].min())
-    print("MEAN: \n") 
-    print(pandasNormalNuclearPlantsSmall[i].mean())
-    print("MEDIAN: \n") 
-    print(pandasNormalNuclearPlantsSmall[i].median())
-    print("MODE: \n") 
-    print(pandasNormalNuclearPlantsSmall[i].mode())
-    print("VAR: \n") 
-    print(pandasNormalNuclearPlantsSmall[i].var())
-    print("Abnormal "+ i)
-    print("MINIMUM: \n") 
-    print(pandasAbnormalNuclearPlantsSmall[i].max())
-    print("MAX: \n") 
-    print(pandasAbnormalNuclearPlantsSmall[i].min())
-    print("MEAN: \n") 
-    print(pandasAbnormalNuclearPlantsSmall[i].mean())
-    print("MEDIAN: \n") 
-    print(pandasAbnormalNuclearPlantsSmall[i].median())
-    print("MODE: \n") 
-    print(pandasAbnormalNuclearPlantsSmall[i].mode())
-    print("VAR: \n") 
-    print(pandasAbnormalNuclearPlantsSmall[i].var())
-    print()
-    plt.savefig('Graph '+i)
-plt.show()
+# for i in featureNames:
+#     plt.figure()
+#     seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
+#     print("Normal" + i)
+#     print("MINIMUM: \n") 
+#     print(pandasNormalNuclearPlantsSmall[i].max())
+#     print("MAX: \n") 
+#     print(pandasNormalNuclearPlantsSmall[i].min())
+#     print("MEAN: \n") 
+#     print(pandasNormalNuclearPlantsSmall[i].mean())
+#     print("MEDIAN: \n") 
+#     print(pandasNormalNuclearPlantsSmall[i].median())
+#     print("MODE: \n") 
+#     print(pandasNormalNuclearPlantsSmall[i].mode())
+#     print("VAR: \n") 
+#     print(pandasNormalNuclearPlantsSmall[i].var())
+#     print("Abnormal "+ i)
+#     print("MINIMUM: \n") 
+#     print(pandasAbnormalNuclearPlantsSmall[i].max())
+#     print("MAX: \n") 
+#     print(pandasAbnormalNuclearPlantsSmall[i].min())
+#     print("MEAN: \n") 
+#     print(pandasAbnormalNuclearPlantsSmall[i].mean())
+#     print("MEDIAN: \n") 
+#     print(pandasAbnormalNuclearPlantsSmall[i].median())
+#     print("MODE: \n") 
+#     print(pandasAbnormalNuclearPlantsSmall[i].mode())
+#     print("VAR: \n") 
+#     print(pandasAbnormalNuclearPlantsSmall[i].var())
+#     print()
+#     plt.savefig('Graph '+i)
+# plt.show()
 
 # Data shows a large amount of outliers that can affect the calculations, robustscaler should be used
 
@@ -95,7 +95,7 @@ plt.show()
 #https://uk.mathworks.com/help/matlab/import_export/compute-mean-value-with-mapreduce.html
 
 # Store list of original column names and data held by the columns
-colNameList = sparksNuclearPlantsSmall.schema.names
+# colNameList = sparksNuclearPlantsSmall.schema.names
 cols = sparksNuclearPlantsSmall.columns
 seedNumber = 1234
 
@@ -104,7 +104,7 @@ stages = []
 
 # Feature extractor
 # String Indexer
-for columns in colNameList:
+for columns in cols:
     stringIndexer = StringIndexer(inputCol = columns, outputCol = columns + 'Index')
     stages += [stringIndexer]
 
@@ -185,27 +185,48 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 # Task 7: Discuss if features can detect abnormality in reactors
 
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
-nuclearRdd:RDD[12] = SparkContext.parellelize(sparksNuclearPlantsSmall.drop["Status"])
+
+sparksNuclearCols = spark.read.csv("dataset/nuclear_plants_small_dataset.csv")
+
+sparksNuclearCols.map()
+
+rdd = sparksNuclearCols.map(f=>{f.split(",")})
+
+new_list = []
+list_p = [['John',19,1,9,20,68],['Jack',3,2,5,12,99]] #list of tuple
+rdd = SparkContext.parallelize(sparksNuclearCols) #Build a RDD
+print(rdd.collect()) # [['John', 19, 1, 9, 20, 68], ['Jack', 3, 2, 5, 12, 99]]
+for p in list_p:
+    header = p[0]
+    p.remove(p[0]) 
+    min_p = SparkContext.parallelize(p).min()
+    max_p = SparkContext.parallelize(p).max()
+    new_list.append("["+header+","+str(min_p)+","+str(max_p)+"]")
+print(new_list) # ['[John,1,68]', '[Jack,2,99]']
+
+rdd.reduceByKey()
+
+# val rdd1=sc.textFile(“sample.txt”)
+# val rdd2=rdd1.flatMap(line => line.split( ))
+# val rdd3=rdd2.map(word => (word,1))
+# val rdd4=rdd3.reduceByKey((v1,v2)=>(v1+v2)
+
 # Count of feature size
-size
+
 
 # Mean/Average = Sum of elements/Total number of elements
-nuclearRdd.reduce((sum,x)->sum+x/size)
-
-# Minimum
-
-# Maximum
+# minVal, maxVal =nuclearRdd.reduce(lambda x,y: (max(y, x[0]), min(y, x[1])), (float('-inf'), float('inf')))
 
 
+# val listRdd = spark.sparkContext.parallelize(List(1,2,3,4,5,3,2))
+# println("output sum using binary : "+listRdd.reduce(_ min _))
+# println("output min using binary : "+listRdd.reduce(_ max _))
+# println("output max using binary : "+listRdd.reduce(_ + _))
+
+# print("Minimum: "+minVal)
+# print("Maximum: "+maxVal)
 # mapper: splits a single tweet string into words, cleans them, and returns a Counter
 
-
-# MapReduce
-# def reduceFunc(accum, n):
-#     print(accum, n)
-#     if accum[1] > n[1]:
-#         return(n)
-#     else: return(accum)
 
 # def mapFunc(lines):
 #     return (lines[0], lines[1])
@@ -220,11 +241,3 @@ nuclearRdd.reduce((sum,x)->sum+x/size)
 # cityTempMin = dfMap.reduceByKey(lambda x, y: min(x[0],y[0]))
 
 # cityTempMin.collect()
-
-
-#  map (in_key, in_value) -> list (out_key, intermediate_value
-
-# ● reduce (out_key, list(intermediate_value)) -> list (out_value)
-
-# reducer: merges two Counter objects given as arguments (hint: use update)
-# chunk_mapper: applies mapper and reducer to a given chunk of tweets, and returns the result
