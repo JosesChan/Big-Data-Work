@@ -191,8 +191,8 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
 #RUN IN GOOGLE COLLAB
 
-nuclearLarge = spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
-
+nuclearLarge = spark.read.csv("dataset/nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
+nuclearLarge = nuclearLarge.drop("Status")
 colNamesLarge = nuclearLarge.schema.names
 
 nuclearLargeRdd = nuclearLarge.rdd
@@ -208,7 +208,9 @@ for i in colNamesLarge:
     # find mean
     meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
     meanVal = meanVal/nuclearLargeRddCurrent.count()
-
-    print(minimum)
-    print(maximum)
-    print(meanVal)
+    
+    print("Current Sensor: ")
+    print("Minimum: "+minimum)
+    print("Maximum: "+maximum)
+    print("Mean: "+meanVal)
+    print()
