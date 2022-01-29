@@ -27,16 +27,16 @@ sparksNuclearPlantsSmall= spark.read.csv("nuclear_plants_small_dataset.csv", hea
 # sparksNuclearPlantsLarge = spark.read.csv("dataset/nuclear_plants_large_dataset.csv", header=True,inferSchema=True)
 
 
-
 # Task 1: Check to see if there are any missing values
 # null values in each column
 
-# dataframeNaN = pandasNuclearPlantsSmall[pandasNuclearPlantsSmall.isna().any(axis=1)]
-# if(dataframeNaN.empty):
-#     print("No null values")
-# else:
-#     print("Null values\n")
-#     print(dataframeNaN)
+dataframeNaN = pandasNuclearPlantsSmall[pandasNuclearPlantsSmall.isna().any(axis=1)]
+if(dataframeNaN.empty):
+    print("No null values")
+else:
+    print("Null values\n")
+    pandasNuclearPlantsSmall = pandasNuclearPlantsSmall[pandasNuclearPlantsSmall.notna().any(axis=1)]
+    print(dataframeNaN)
 
 # Task 2: Normal Group and Abnormal Group, find min, max, mean, median, mode, variance and boxplot
 featureNames = pandasNuclearPlantsSmall.drop(["Status"],axis = 1).columns.values
