@@ -200,13 +200,13 @@ nuclearLargeRdd = nuclearLarge.rdd
 
 nuclearLargeRddCurrent = nuclearLargeRdd.map(lambda x: x.Power_range_sensor_1)
 
-print(nuclearLargeRddCurrent.min())
-print(nuclearLargeRddCurrent.max())
 
-# find minimum, if x is less than y return x else return y, aggregate through the 
-nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
+# find minimum, if x is less than y return x else return y, aggregate elements using this function
+minimum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
+maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
 
-mean = nuclearLargeRdd.reduce(lambda x, y: x.Power_range_sensor_1+y.Power_range_sensor_1)
+# find mean
+mean = nuclearLargeRdd.reduce(lambda x, y: x+y)
 
 
 
