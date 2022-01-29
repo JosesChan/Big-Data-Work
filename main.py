@@ -1,5 +1,7 @@
 from pyspark.sql.functions import *
-from pyspark import RDD, SparkContext
+from pyspark import SparkContext, SparkConf
+from pyspark import RDD, SparkContext, SparkConf
+from pyspark.sql.context import SQLContext
 from pyspark.sql import SparkSession
 from pyspark.ml import Pipeline
 from pyspark.ml.classification import DecisionTreeClassifier, LinearSVC, MultilayerPerceptronClassifier
@@ -11,7 +13,6 @@ from pyspark.mllib.classification import SVMWithSGD, SVMModel
 from pyspark.mllib.regression import LabeledPoint
 from pyspark.mllib.tree import DecisionTree, DecisionTreeModel
 from pyspark.mllib.util import MLUtils
-
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
@@ -167,6 +168,7 @@ predictions = lsvcModel.transform(testData)
 evaluator = MulticlassClassificationEvaluator().setMetricName('accuracy')
 accuracy = evaluator.evaluate(predictions) 
 # Show the accuracy
+
 print ("Support Vector Machine Test Error = %g" % (1.0 - accuracy))
 
 
@@ -190,28 +192,28 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 # nuclearRdd:RDD[12] = SparkContext.parellelize(sparksNuclearPlantsSmall.drop["Status"])
 # nuclearRdd.map
 
+#RUN IN GOOGLE COLLAB
 
-nuclearLarge = spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
+# nuclearLarge = spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
 
-nuclearLargeRdd = nuclearLarge.rdd
+# nuclearLargeRdd = nuclearLarge.rdd
 
-nuclearLargeRdd = nuclearLargeRdd.map(lambda line: line.split(","))
+# nuclearLargeRdd.take(5)
 
-print(nuclearLargeRdd.take(10))
+# print(nuclearLargeRdd.map(lambda x: x.Power_range_sensor_1).collect())
+
+
+# sensorList = nuclearLargeRdd.__getattribute__
+
+# nuclearLargeRdd.stats
+
+# nuclearLargeRdd = nuclearLargeRdd.map(lambda line: line.split(","))
+
+
+# for i in sensorList:
+#     print(sensorList[i]) 
 
 # rdd = nuclearLargeRdd.map(f=>{f.split(",")})
-
-# new_list = []
-# list_p = [['John',19,1,9,20,68],['Jack',3,2,5,12,99]] #list of tuple
-# rdd = SparkContext.parallelize(sparksNuclearCols) #Build a RDD
-# print(rdd.collect()) # [['John', 19, 1, 9, 20, 68], ['Jack', 3, 2, 5, 12, 99]]
-# for p in list_p:
-#     header = p[0]
-#     p.remove(p[0]) 
-#     min_p = SparkContext.parallelize(p).min()
-#     max_p = SparkContext.parallelize(p).max()
-#     new_list.append("["+header+","+str(min_p)+","+str(max_p)+"]")
-# print(new_list) # ['[John,1,68]', '[Jack,2,99]']
 
 # rdd.reduceByKey()
 
