@@ -93,9 +93,11 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 #https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
 #https://towardsdatascience.com/machine-learning-with-pyspark-and-mllib-solving-a-binary-classification-problem-96396065d2aa
 #https://uk.mathworks.com/help/matlab/import_export/compute-mean-value-with-mapreduce.html
+#https://spark.apache.org/docs/1.1.1/api/python/pyspark.rdd.RDD-class.html
+#https://hackersandslackers.com/working-with-pyspark-rdds
 
 # Store list of original column names and data held by the columns
-# colNameList = sparksNuclearPlantsSmall.schema.names
+colNameList = sparksNuclearPlantsSmall.schema.names
 cols = sparksNuclearPlantsSmall.columns
 seedNumber = 1234
 
@@ -104,7 +106,7 @@ stages = []
 
 # Feature extractor
 # String Indexer
-for columns in cols:
+for columns in colNameList:
     stringIndexer = StringIndexer(inputCol = columns, outputCol = columns + 'Index')
     stages += [stringIndexer]
 
@@ -185,48 +187,54 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 # Task 7: Discuss if features can detect abnormality in reactors
 
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
+# nuclearRdd:RDD[12] = SparkContext.parellelize(sparksNuclearPlantsSmall.drop["Status"])
+# nuclearRdd.map
 
-sparksNuclearCols = spark.read.csv("dataset/nuclear_plants_small_dataset.csv")
 
-sparksNuclearCols.map()
+nuclearLarge = spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
 
-rdd = sparksNuclearCols.map(f=>{f.split(",")})
+nuclearLargeRdd = nuclearLarge.rdd
 
-new_list = []
-list_p = [['John',19,1,9,20,68],['Jack',3,2,5,12,99]] #list of tuple
-rdd = SparkContext.parallelize(sparksNuclearCols) #Build a RDD
-print(rdd.collect()) # [['John', 19, 1, 9, 20, 68], ['Jack', 3, 2, 5, 12, 99]]
-for p in list_p:
-    header = p[0]
-    p.remove(p[0]) 
-    min_p = SparkContext.parallelize(p).min()
-    max_p = SparkContext.parallelize(p).max()
-    new_list.append("["+header+","+str(min_p)+","+str(max_p)+"]")
-print(new_list) # ['[John,1,68]', '[Jack,2,99]']
+nuclearLargeRdd = nuclearLargeRdd.map(lambda line: line.split(","))
 
-rdd.reduceByKey()
+print(nuclearLargeRdd.take(10))
 
-# val rdd1=sc.textFile(“sample.txt”)
-# val rdd2=rdd1.flatMap(line => line.split( ))
-# val rdd3=rdd2.map(word => (word,1))
-# val rdd4=rdd3.reduceByKey((v1,v2)=>(v1+v2)
+# rdd = nuclearLargeRdd.map(f=>{f.split(",")})
+
+# new_list = []
+# list_p = [['John',19,1,9,20,68],['Jack',3,2,5,12,99]] #list of tuple
+# rdd = SparkContext.parallelize(sparksNuclearCols) #Build a RDD
+# print(rdd.collect()) # [['John', 19, 1, 9, 20, 68], ['Jack', 3, 2, 5, 12, 99]]
+# for p in list_p:
+#     header = p[0]
+#     p.remove(p[0]) 
+#     min_p = SparkContext.parallelize(p).min()
+#     max_p = SparkContext.parallelize(p).max()
+#     new_list.append("["+header+","+str(min_p)+","+str(max_p)+"]")
+# print(new_list) # ['[John,1,68]', '[Jack,2,99]']
+
+# rdd.reduceByKey()
+
 
 # Count of feature size
-
+# size
 
 # Mean/Average = Sum of elements/Total number of elements
-# minVal, maxVal =nuclearRdd.reduce(lambda x,y: (max(y, x[0]), min(y, x[1])), (float('-inf'), float('inf')))
+# mean = nuclearRdd.reduce(lambda x, y: x+y)
+
+# Minimum/Max
+# val_max, val_min = nuclearRdd.reduce(lambda x,y: (max(y, x[0]), min(y, x[1])), (float('-inf'), float('inf'))) 
 
 
-# val listRdd = spark.sparkContext.parallelize(List(1,2,3,4,5,3,2))
-# println("output sum using binary : "+listRdd.reduce(_ min _))
-# println("output min using binary : "+listRdd.reduce(_ max _))
-# println("output max using binary : "+listRdd.reduce(_ + _))
-
-# print("Minimum: "+minVal)
-# print("Maximum: "+maxVal)
 # mapper: splits a single tweet string into words, cleans them, and returns a Counter
 
+
+# MapReduce
+# def reduceFunc(accum, n):
+#     print(accum, n)
+#     if accum[1] > n[1]:
+#         return(n)
+#     else: return(accum)
 
 # def mapFunc(lines):
 #     return (lines[0], lines[1])
@@ -241,3 +249,11 @@ rdd.reduceByKey()
 # cityTempMin = dfMap.reduceByKey(lambda x, y: min(x[0],y[0]))
 
 # cityTempMin.collect()
+
+
+#  map (in_key, in_value) -> list (out_key, intermediate_value
+
+# ● reduce (out_key, list(intermediate_value)) -> list (out_value)
+
+# reducer: merges two Counter objects given as arguments (hint: use update)
+# chunk_mapper: applies mapper and reducer to a given chunk of tweets, and returns the result
