@@ -194,20 +194,20 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 
 #RUN IN GOOGLE COLLAB
 
-# nuclearLarge = spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
+nuclearLarge = spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
 
-# nuclearLargeRdd = nuclearLarge.rdd
+nuclearLargeRdd = nuclearLarge.rdd
 
-# nuclearLargeRdd.take(5)
+nuclearLargeRddCurrent = nuclearLargeRdd.map(lambda x: x.Power_range_sensor_1)
 
-# print(nuclearLargeRdd.map(lambda x: x.Power_range_sensor_1).collect())
+print(nuclearLargeRddCurrent.min())
+print(nuclearLargeRddCurrent.max())
 
+# find minimum, if x is less than y return x else return y, aggregate through the 
+nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
 
-# sensorList = nuclearLargeRdd.__getattribute__
+mean = nuclearLargeRdd.reduce(lambda x, y: x.Power_range_sensor_1+y.Power_range_sensor_1)
 
-# nuclearLargeRdd.stats
-
-# nuclearLargeRdd = nuclearLargeRdd.map(lambda line: line.split(","))
 
 
 # for i in sensorList:
