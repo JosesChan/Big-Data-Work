@@ -189,79 +189,26 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 # Task 7: Discuss if features can detect abnormality in reactors
 
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
-# nuclearRdd:RDD[12] = SparkContext.parellelize(sparksNuclearPlantsSmall.drop["Status"])
-# nuclearRdd.map
-
 #RUN IN GOOGLE COLLAB
 
 nuclearLarge = spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
 
+colNamesLarge = nuclearLarge.schema.names
+
 nuclearLargeRdd = nuclearLarge.rdd
 
-nuclearLargeRddCurrent = nuclearLargeRdd.map(lambda x: x.Power_range_sensor_1)
+for i in colNamesLarge:
+    nuclearLargeRddCurrent = nuclearLargeRdd.map(lambda x: x.colNamesLarge[i])
 
+    # find minimum, if x is less than y return x else return y, aggregate elements using this function
+    minimum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
+    # find maximum, if x is more than y return x else return y, aggregate elements using this function
+    maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
 
-# find minimum, if x is less than y return x else return y, aggregate elements using this function
-minimum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
-# find maximum, if x is more than y return x else return y, aggregate elements using this function
-maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
+    # find mean
+    meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
+    meanVal = meanVal/nuclearLargeRddCurrent.count()
 
-# find mean
-meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
-meanVal = meanVal/nuclearLargeRddCurrent.count()
-
-print(minimum)
-print(maximum)
-print(meanVal)
-
-
-
-# for i in sensorList:
-#     print(sensorList[i]) 
-
-# rdd = nuclearLargeRdd.map(f=>{f.split(",")})
-
-# rdd.reduceByKey()
-
-
-# Count of feature size
-# size
-
-# Mean/Average = Sum of elements/Total number of elements
-# mean = nuclearRdd.reduce(lambda x, y: x+y)
-
-# Minimum/Max
-# val_max, val_min = nuclearRdd.reduce(lambda x,y: (max(y, x[0]), min(y, x[1])), (float('-inf'), float('inf'))) 
-
-
-# mapper: splits a single tweet string into words, cleans them, and returns a Counter
-
-
-# MapReduce
-# def reduceFunc(accum, n):
-#     print(accum, n)
-#     if accum[1] > n[1]:
-#         return(n)
-#     else: return(accum)
-
-# def mapFunc(lines):
-#     return (lines[0], lines[1])
-
-# rdd = SparkContext.parallelize(sparksNuclearPlantsSmall)
-
-# rdd.map(mapFunc).keyBy(lambda x: x[0]).reduceByKey(reduceFunc).map(lambda x : x[1]).collect()
-
-
-# dfMap = sparksNuclearPlantsSmall.map(lambda x: (x[0], tuple(x[1:])))
-
-# cityTempMin = dfMap.reduceByKey(lambda x, y: min(x[0],y[0]))
-
-# cityTempMin.collect()
-
-
-#  map (in_key, in_value) -> list (out_key, intermediate_value
-
-# ● reduce (out_key, list(intermediate_value)) -> list (out_value)
-
-# reducer: merges two Counter objects given as arguments (hint: use update)
-# chunk_mapper: applies mapper and reducer to a given chunk of tweets, and returns the result
+    print(minimum)
+    print(maximum)
+    print(meanVal)
