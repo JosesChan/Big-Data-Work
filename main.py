@@ -22,8 +22,8 @@ import pyspark.sql.functions
 spark = SparkSession.builder.getOrCreate()
 
 # Read csv file into spark
-pandasNuclearPlantsSmall = pandas.read_csv("dataset/nuclear_plants_small_dataset.csv")
-sparksNuclearPlantsSmall= spark.read.csv("dataset/nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
+pandasNuclearPlantsSmall = pandas.read_csv("nuclear_plants_small_dataset.csv")
+sparksNuclearPlantsSmall= spark.read.csv("nuclear_plants_small_dataset.csv", header=True,inferSchema=True)
 # sparksNuclearPlantsLarge = spark.read.csv("dataset/nuclear_plants_large_dataset.csv", header=True,inferSchema=True)
 
 
@@ -191,7 +191,7 @@ print ("Multilayer perceptron Test Error = %g" % (1.0 - accuracy))
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
 #RUN IN GOOGLE COLLAB
 
-nuclearLarge = spark.read.csv("dataset/nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
+nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
 nuclearLarge = nuclearLarge.drop("Status")
 colNamesLarge = nuclearLarge.schema.names
 
