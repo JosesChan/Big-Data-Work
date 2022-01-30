@@ -52,38 +52,38 @@ pandasNormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlant
 pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Abnormal"]
 
 
-# for i in featureNames:
-#     plt.figure()
-#     seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
-#     print("Normal" + i)
-#     print("MINIMUM: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].max())
-#     print("MAX: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].min())
-#     print("MEAN: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].median())
-#     print("MODE: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].mode())
-#     print("VAR: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].var())
-#     print("Abnormal "+ i)
-#     print("MINIMUM: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].max())
-#     print("MAX: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].min())
-#     print("MEAN: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].median())
-#     print("MODE: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].mode())
-#     print("VAR: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].var())
-#     print()
-#     plt.savefig('Graph '+i)
-# plt.show()
+for i in featureNames:
+    plt.figure()
+    seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
+    print("Normal" + i)
+    print("MINIMUM: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].max())
+    print("MAX: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].min())
+    print("MEAN: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].mean())
+    print("MEDIAN: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].median())
+    print("MODE: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].mode())
+    print("VAR: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].var())
+    print("Abnormal "+ i)
+    print("MINIMUM: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].max())
+    print("MAX: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].min())
+    print("MEAN: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].mean())
+    print("MEDIAN: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].median())
+    print("MODE: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].mode())
+    print("VAR: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].var())
+    print()
+    plt.savefig('Graph '+i)
+plt.show()
 
 # Data shows a large amount of outliers that can affect the calculations, robustscaler should be used
 
@@ -135,17 +135,6 @@ normalizerScaled = Normalizer(inputCol="scaledFeatures", outputCol="normRobScale
 stages += [normalizerScaled]
 
 
-# Pipeline to create stages
-# Ensuring data goes through identical processing steps
-def pipelineActivate(stages, classifierChoice):
-    pipeline = Pipeline(stages = stages+classifierChoice)
-    pipelineModel = pipeline.fit(trainingData)
-    predictions = pipelineModel.transform(trainingData)
-    evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
-    accuracy = evaluator.evaluate(predictions)
-    print ("Test Error = %g" % (1.0 - accuracy))
-
-
 def classifierChoice(classifierChosen):
     if(classifierChosen==1):
         print("Decision Tree Results:")
@@ -159,6 +148,17 @@ def classifierChoice(classifierChosen):
         print("MultilayerPerceptron Results:")
         annModel=MultilayerPerceptronClassifier(featuresCol = 'scaledFeatures', labelCol = 'label', layers=[12, 8, 8, 2], seed=seedNumber)
         return([annModel])
+
+# Pipeline to create stages
+# Ensuring data goes through identical processing steps
+def pipelineActivate(stages, classifierChoice):
+    pipeline = Pipeline(stages = stages+classifierChoice)
+    pipelineModel = pipeline.fit(trainingData)
+    predictions = pipelineModel.transform(trainingData)
+    evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
+    accuracy = evaluator.evaluate(predictions)
+    print ("Test Error = %g" % (1.0 - accuracy))
+
 
 
 pipelineActivate(stages, classifierChoice(1))
