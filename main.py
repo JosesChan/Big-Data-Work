@@ -157,7 +157,7 @@ pipelineActivate(stages, classifierChoice(1))
 pipelineActivate(stages, classifierChoice(2))
 pipelineActivate(stages, classifierChoice(3))
 
-# # Task 6: Compare results based on task 5, which is best
+# Task 6: Compare results based on task 5, which is best
 
 # Task 7: Discuss if features can detect abnormality in reactors
 
@@ -170,20 +170,21 @@ colNamesLarge = nuclearLarge.schema.names
 
 nuclearLargeRdd = nuclearLarge.rdd
 
-for i in colNamesLarge:
-    nuclearLargeRddCurrent = nuclearLargeRdd.map(lambda x: x.colNamesLarge[i])
+nuclearLargeRddCurrent = nuclearLargeRdd.map(lambda x: x.Power_range_sensor_1)
 
-    # find minimum, if x is less than y return x else return y, aggregate elements using this function
-    minimum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
-    # find maximum, if x is more than y return x else return y, aggregate elements using this function
-    maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
+# find minimum, if x is less than y return x else return y, aggregate elements using this function
+minimum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
+# find maximum, if x is more than y return x else return y, aggregate elements using this function
+maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
 
-    # find mean
-    meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
-    meanVal = meanVal/nuclearLargeRddCurrent.count()
+# find mean
+meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
+meanVal = meanVal/nuclearLargeRddCurrent.count()
     
-    print("Current Sensor: ")
-    print("Minimum: "+minimum)
-    print("Maximum: "+maximum)
-    print("Mean: "+meanVal)
-    print()
+print("Current Sensor: ")
+print("Minimum: ")
+print(minimum)
+print("Maximum: ")
+print(maximum)
+print("Mean: ")
+print(meanVal)
