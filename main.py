@@ -37,13 +37,13 @@ sparksNuclearPlantsSmall= spark.read.csv("nuclear_plants_small_dataset.csv", hea
 # Task 1: Check to see if there are any missing values
 # null values in each column
 
-# dataframeNaN = pandasNuclearPlantsSmall[pandasNuclearPlantsSmall.isna().any(axis=1)]
-# if(dataframeNaN.empty):
-#     print("No null values")
-# else:
-#     print("Null values\n")
-#     pandasNuclearPlantsSmall = pandasNuclearPlantsSmall[pandasNuclearPlantsSmall.notna().any(axis=1)]
-#     print(dataframeNaN)
+dataframeNaN = pandasNuclearPlantsSmall[pandasNuclearPlantsSmall.isna().any(axis=1)]
+if(dataframeNaN.empty):
+    print("No null values")
+else:
+    print("Null values\n")
+    pandasNuclearPlantsSmall = pandasNuclearPlantsSmall[pandasNuclearPlantsSmall.notna().any(axis=1)]
+    print(dataframeNaN)
 
 # Task 2: Normal Group and Abnormal Group, find min, max, mean, median, mode, variance and boxplot
 featureNames = pandasNuclearPlantsSmall.drop(["Status"],axis = 1).columns.values
@@ -85,12 +85,9 @@ for i in featureNames:
     plt.savefig('Graph '+i)
 plt.show()
 
-# Data shows a large amount of outliers that can affect the calculations, robustscaler should be used
-
-
 # Task 3: Show in a table the correlation matrix, where each element shows correlation between two features, find highly correlated features.
 
-# Using pearson and not spearman's or Kendall's since data is not monotonic
+# # Using pearson and not spearman's or Kendall's since data is not monotonic
 print("Pearson Correlation Matrix")
 print(pandasNormalNuclearPlantsSmall.corr(method="pearson"))
 print(pandasAbnormalNuclearPlantsSmall.corr(method="pearson"))
@@ -100,15 +97,12 @@ seedNumber = 1234
 # Split the data into training and test sets (30% held out for testing)
 (trainingData, testData) = sparksNuclearPlantsSmall.randomSplit([0.7, 0.3], seed=seedNumber)
 
-# # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
-
-
+# Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 # Store list of original column names and data held by the columns
 colNameList = sparksNuclearPlantsSmall.schema.names
 cols = sparksNuclearPlantsSmall.columns
 
-
-# Link the stages into a pipeline
+# Link the stages into a ETL pipeline
 stages = []
 
 # Feature extractor
@@ -122,7 +116,7 @@ numericColsNameList = (sparksNuclearPlantsSmall.drop("Status")).schema.names
 assembler = VectorAssembler(inputCols=numericColsNameList, outputCol="features")
 stages += [assembler]
 
-# Robust Scaler, an estimator that 
+# Data shows a large amount of outliers that can affect the calculations, robustscaler should be used
 scaler = RobustScaler(inputCol="features", outputCol="scaledFeatures", withScaling=True, withCentering=False, lower=0.25, upper=0.75)
 stages += [scaler]
 
@@ -159,39 +153,37 @@ def pipelineActivate(stages, classifierChoice):
     accuracy = evaluator.evaluate(predictions)
     print ("Test Error = %g" % (1.0 - accuracy))
 
-
-
 pipelineActivate(stages, classifierChoice(1))
 pipelineActivate(stages, classifierChoice(2))
 pipelineActivate(stages, classifierChoice(3))
 
-# # # Task 6: Compare results based on task 5, which is best
+# # Task 6: Compare results based on task 5, which is best
 
-# # Task 7: Discuss if features can detect abnormality in reactors
+# Task 7: Discuss if features can detect abnormality in reactors
 
-# # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
-# #RUN IN GOOGLE COLLAB
+# Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
+#RUN IN GOOGLE COLLAB
 
-# nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
-# nuclearLarge = nuclearLarge.drop("Status")
-# colNamesLarge = nuclearLarge.schema.names
+nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
+nuclearLarge = nuclearLarge.drop("Status")
+colNamesLarge = nuclearLarge.schema.names
 
-# nuclearLargeRdd = nuclearLarge.rdd
+nuclearLargeRdd = nuclearLarge.rdd
 
-# for i in colNamesLarge:
-#     nuclearLargeRddCurrent = nuclearLargeRdd.map(lambda x: x.colNamesLarge[i])
+for i in colNamesLarge:
+    nuclearLargeRddCurrent = nuclearLargeRdd.map(lambda x: x.colNamesLarge[i])
 
-#     # find minimum, if x is less than y return x else return y, aggregate elements using this function
-#     minimum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
-#     # find maximum, if x is more than y return x else return y, aggregate elements using this function
-#     maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
+    # find minimum, if x is less than y return x else return y, aggregate elements using this function
+    minimum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
+    # find maximum, if x is more than y return x else return y, aggregate elements using this function
+    maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
 
-#     # find mean
-#     meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
-#     meanVal = meanVal/nuclearLargeRddCurrent.count()
+    # find mean
+    meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
+    meanVal = meanVal/nuclearLargeRddCurrent.count()
     
-#     print("Current Sensor: ")
-#     print("Minimum: "+minimum)
-#     print("Maximum: "+maximum)
-#     print("Mean: "+meanVal)
-#     print()
+    print("Current Sensor: ")
+    print("Minimum: "+minimum)
+    print("Maximum: "+maximum)
+    print("Mean: "+meanVal)
+    print()
