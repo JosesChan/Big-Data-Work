@@ -132,6 +132,10 @@ stages += [normalizer]
 normalizerScaled = Normalizer(inputCol="scaledFeatures", outputCol="normRobScaleFeatures", p=(2))
 stages += [normalizerScaled]
 
+lsvcModel=LinearSVC(featuresCol = 'scaledFeatures', labelCol = 'label')
+stages += [lsvcModel]
+
+
 # Pipeline to create stages
 # Ensuring data goes through identical processing steps
 pipeline = Pipeline(stages = stages)
@@ -167,7 +171,6 @@ predictions = lsvcModel.transform(testData)
 evaluator = MulticlassClassificationEvaluator().setMetricName('accuracy')
 accuracy = evaluator.evaluate(predictions) 
 # Show the accuracy
-
 print ("Support Vector Machine Test Error = %g" % (1.0 - accuracy))
 
 
