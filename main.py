@@ -1,3 +1,10 @@
+# References
+#https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
+#https://towardsdatascience.com/machine-learning-with-pyspark-and-mllib-solving-a-binary-classification-problem-96396065d2aa
+#https://uk.mathworks.com/help/matlab/import_export/compute-mean-value-with-mapreduce.html
+#https://spark.apache.org/docs/1.1.1/api/python/pyspark.rdd.RDD-class.html
+#https://hackersandslackers.com/working-with-pyspark-rdds
+
 from pyspark.sql.functions import *
 from pyspark import SparkContext, SparkConf
 from pyspark import RDD, SparkContext, SparkConf
@@ -45,38 +52,38 @@ pandasNormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlant
 pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Abnormal"]
 
 
-# for i in featureNames:
-#     plt.figure()
-#     seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
-#     print("Normal" + i)
-#     print("MINIMUM: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].max())
-#     print("MAX: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].min())
-#     print("MEAN: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].median())
-#     print("MODE: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].mode())
-#     print("VAR: \n") 
-#     print(pandasNormalNuclearPlantsSmall[i].var())
-#     print("Abnormal "+ i)
-#     print("MINIMUM: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].max())
-#     print("MAX: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].min())
-#     print("MEAN: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].mean())
-#     print("MEDIAN: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].median())
-#     print("MODE: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].mode())
-#     print("VAR: \n") 
-#     print(pandasAbnormalNuclearPlantsSmall[i].var())
-#     print()
-#     plt.savefig('Graph '+i)
-# plt.show()
+for i in featureNames:
+    plt.figure()
+    seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
+    print("Normal" + i)
+    print("MINIMUM: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].max())
+    print("MAX: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].min())
+    print("MEAN: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].mean())
+    print("MEDIAN: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].median())
+    print("MODE: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].mode())
+    print("VAR: \n") 
+    print(pandasNormalNuclearPlantsSmall[i].var())
+    print("Abnormal "+ i)
+    print("MINIMUM: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].max())
+    print("MAX: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].min())
+    print("MEAN: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].mean())
+    print("MEDIAN: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].median())
+    print("MODE: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].mode())
+    print("VAR: \n") 
+    print(pandasAbnormalNuclearPlantsSmall[i].var())
+    print()
+    plt.savefig('Graph '+i)
+plt.show()
 
 # Data shows a large amount of outliers that can affect the calculations, robustscaler should be used
 
@@ -84,18 +91,11 @@ pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPla
 # Task 3: Show in a table the correlation matrix, where each element shows correlation between two features, find highly correlated features.
 
 # Using pearson and not spearman's or Kendall's since data is not monotonic
-# print("Pearson Correlation Matrix")
-# print(pandasNormalNuclearPlantsSmall.corr(method="pearson"))
-# print(pandasAbnormalNuclearPlantsSmall.corr(method="pearson"))
+print("Pearson Correlation Matrix")
+print(pandasNormalNuclearPlantsSmall.corr(method="pearson"))
+print(pandasAbnormalNuclearPlantsSmall.corr(method="pearson"))
 
 # Task 4: Shuffle data into 70% training set and 30% test set
-
-# References
-#https://spark.apache.org/docs/1.5.2/ml-decision-tree.html
-#https://towardsdatascience.com/machine-learning-with-pyspark-and-mllib-solving-a-binary-classification-problem-96396065d2aa
-#https://uk.mathworks.com/help/matlab/import_export/compute-mean-value-with-mapreduce.html
-#https://spark.apache.org/docs/1.1.1/api/python/pyspark.rdd.RDD-class.html
-#https://hackersandslackers.com/working-with-pyspark-rdds
 
 # Store list of original column names and data held by the columns
 colNameList = sparksNuclearPlantsSmall.schema.names
@@ -131,7 +131,6 @@ stages += [normalizer]
 # Normalize each Vector using $L^1$ norm.
 normalizerScaled = Normalizer(inputCol="scaledFeatures", outputCol="normRobScaleFeatures", p=(2))
 stages += [normalizerScaled]
-
 
 # Pipeline to create stages
 # Ensuring data goes through identical processing steps
