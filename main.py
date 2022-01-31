@@ -51,35 +51,34 @@ featureNames = pandasNuclearPlantsSmall.drop(["Status"],axis = 1).columns.values
 pandasNormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Normal"]
 pandasAbnormalNuclearPlantsSmall = pandasNuclearPlantsSmall.loc[pandasNuclearPlantsSmall["Status"] == "Abnormal"]
 
-
 for i in featureNames:
     plt.figure()
     seaborn.boxplot(x=pandasNuclearPlantsSmall["Status"], y=pandasNuclearPlantsSmall[i])
-    print("Normal" + i)
-    print("MINIMUM: \n") 
+    print("\nNormal" + i)
+    print("MINIMUM: ") 
     print(pandasNormalNuclearPlantsSmall[i].max())
-    print("MAX: \n") 
+    print("MAX: ") 
     print(pandasNormalNuclearPlantsSmall[i].min())
-    print("MEAN: \n") 
+    print("MEAN: ") 
     print(pandasNormalNuclearPlantsSmall[i].mean())
-    print("MEDIAN: \n") 
+    print("MEDIAN: ") 
     print(pandasNormalNuclearPlantsSmall[i].median())
-    print("MODE: \n") 
+    print("MODE: ") 
     print(pandasNormalNuclearPlantsSmall[i].mode())
-    print("VAR: \n") 
+    print("VAR: ") 
     print(pandasNormalNuclearPlantsSmall[i].var())
-    print("Abnormal "+ i)
-    print("MINIMUM: \n") 
+    print("\nAbnormal "+ i)
+    print("MINIMUM: ") 
     print(pandasAbnormalNuclearPlantsSmall[i].max())
-    print("MAX: \n") 
+    print("MAX: ") 
     print(pandasAbnormalNuclearPlantsSmall[i].min())
-    print("MEAN: \n") 
+    print("MEAN: ") 
     print(pandasAbnormalNuclearPlantsSmall[i].mean())
-    print("MEDIAN: \n") 
+    print("MEDIAN: ") 
     print(pandasAbnormalNuclearPlantsSmall[i].median())
-    print("MODE: \n") 
+    print("MODE: ") 
     print(pandasAbnormalNuclearPlantsSmall[i].mode())
-    print("VAR: \n") 
+    print("VAR: ") 
     print(pandasAbnormalNuclearPlantsSmall[i].var())
     print()
     plt.savefig('Graph '+i)
@@ -89,14 +88,15 @@ plt.show()
 
 # # Using pearson and not spearman's or Kendall's since data is not monotonic
 print("Pearson Correlation Matrix")
-print(pandasNormalNuclearPlantsSmall.corr(method="pearson"))
-print(pandasAbnormalNuclearPlantsSmall.corr(method="pearson"))
+print(pandasNuclearPlantsSmall.corr(method="pearson"))
 
 # Task 4: Shuffle data into 70% training set and 30% test set
 seedNumber = 1234
 # Split the data into training and test sets (30% held out for testing)
 (trainingData, testData) = sparksNuclearPlantsSmall.randomSplit([0.7, 0.3], seed=seedNumber)
+print("Training Data Rows:")
 print(trainingData.count())
+print("Test Data Rows: ")
 print(testData.count())
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
@@ -153,7 +153,15 @@ def pipelineActivate(stages, classifierChoice):
     predictions = pipelineModel.transform(trainingData)
     evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
     accuracy = evaluator.evaluate(predictions)
-    print ("Test Error = %g" % (1.0 - accuracy))
+    
+    # truePositives = sum("label" == 0 & "prediction" == 1)
+    # trueNegatives = sum()
+    # falsePositives = sum()
+    # falseNegatives = sum()
+
+    print("Test Error = %g" % (1.0 - accuracy))
+    print("Specificity = %g" % (1.0 - accuracy))
+    print("Sensitivity = %g" % (1.0 - accuracy))
 
 pipelineActivate(stages, classifierChoice(1))
 pipelineActivate(stages, classifierChoice(2))
@@ -175,33 +183,33 @@ nuclearLargeRdd = nuclearLarge.rdd
 
 # function to input into max
 
-def maxMapping(x):
-      yield max(x)
+# def maxMapping(x):
+#       yield max(x)
 
-def minMapping(x):
-      yield min(x)
+# def minMapping(x):
+#       yield min(x)
 
-def sumMapping(x): 
-  yield sum(x)
+# def sumMapping(x): 
+#   yield sum(x)
 
-# Map partitions operates across entire rdd using mapping function which will
-# yield x 
-maximumMap = nuclearLargeRdd.mapPartitions(maxMapping)
-minimumMap = nuclearLargeRdd.mapPartitions(minMapping)
-sumMap = nuclearLargeRdd.mapPartitions(sumMapping)
+# # Map partitions operates across entire rdd using mapping function which will
+# # yield x 
+# maximumMap = nuclearLargeRdd.mapPartitions(maxMapping)
+# minimumMap = nuclearLargeRdd.mapPartitions(minMapping)
+# sumMap = nuclearLargeRdd.mapPartitions(sumMapping)
 
-maxReducer = maximumMap.reduce(lambda x, y: x if (x > y) else y)
+# maxReducer = maximumMap.reduce(lambda x, y: x if (x > y) else y)
 
-minReducer = minimumMap.reduce(lambda x, y: x if (x < y) else y)
+# minReducer = minimumMap.reduce(lambda x, y: x if (x < y) else y)
 
-# meanVal = sumMap.reduce(lambda x: x/nuclearLargeRdd.count())
-# meanVal = meanVal/nuclearLargeRdd.count()
-# meanVal = sumMap.reduce(lambda x,y: x+y/nuclearLargeRdd.count()) 
+# # meanVal = sumMap.reduce(lambda x: x/nuclearLargeRdd.count())
+# # meanVal = meanVal/nuclearLargeRdd.count()
+# # meanVal = sumMap.reduce(lambda x,y: x+y/nuclearLargeRdd.count()) 
 
 
-sumValue = nuclearLargeRdd.reduce(lambda x, y: x)
+# sumValue = nuclearLargeRdd.reduce(lambda x, y: x)
 
-print(sumValue)
+# print(sumValue)
 
-print(maxReducer)
-print(minReducer)
+# print(maxReducer)
+# print(minReducer)
