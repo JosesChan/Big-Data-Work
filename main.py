@@ -96,6 +96,8 @@ print(pandasAbnormalNuclearPlantsSmall.corr(method="pearson"))
 seedNumber = 1234
 # Split the data into training and test sets (30% held out for testing)
 (trainingData, testData) = sparksNuclearPlantsSmall.randomSplit([0.7, 0.3], seed=seedNumber)
+print(trainingData.count())
+print(testData.count())
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 # Store list of original column names and data held by the columns
@@ -181,14 +183,15 @@ def maxMapping(x):
 def minMapping(x):
       yield min(x)
 
-def sumMapping(x):
-      yield x
+def sumMapping(x): 
+  parts = (list(x))
+  yield sum(parts, 0)
 
 # Map partitions operates across entire rdd using mapping function which will
 # yield x 
 maximumMap = nuclearLargeRdd.mapPartitions(maxMapping)
 minimumMap = nuclearLargeRdd.mapPartitions(minMapping)
-sumMap = nuclearLargeRdd.mapPartitions(sumMapping)
+sumMap = nuclearLargeRdd.mapPartitions(sumMapping).collect()
 
 maxReducer = maximumMap.reduce(lambda x, y: x if (x > y) else y)
 
@@ -196,7 +199,10 @@ minReducer = minimumMap.reduce(lambda x, y: x if (x < y) else y)
 
 # meanVal = sumMap.reduce(lambda x: x/nuclearLargeRdd.count())
 # meanVal = meanVal/nuclearLargeRdd.count()
-meanVal = nuclearLargeRdd.reduce(lambda x,y: x+y) / nuclearLargeRdd.count()
+# meanVal = sumMap.reduce(lambda x,y: x+y/nuclearLargeRdd.count()) 
+
+
+meanVal = sumMap
 
 print(maxReducer)
 print(minReducer)
