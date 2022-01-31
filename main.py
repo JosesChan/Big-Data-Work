@@ -170,16 +170,45 @@ colNamesLarge = nuclearLarge.schema.names
 
 nuclearLargeRdd = nuclearLarge.rdd
 
-nuclearLargeRddCurrent = nuclearLargeRdd.map(lambda x: x.Power_range_sensor_1)
+
 
 # find minimum, if x is less than y return x else return y, aggregate elements using this function
-minimum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x < y) else y)
-# find maximum, if x is more than y return x else return y, aggregate elements using this function
-maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
 
-# find mean
-meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
-meanVal = meanVal/nuclearLargeRddCurrent.count()
+def minimumNuclear(x):
+    yield x.min()
+
+def  minimumFunction(x, y): 
+    if (x < y):
+        return x 
+    else: 
+        return y
+
+minmap = nuclearLargeRdd.mapPartitions(minimumNuclear)
+
+minReducer = minmap.reduce(minimumFunction)
+
+print(minReducer)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # find maximum, if x is more than y return x else return y, aggregate elements using this function
+# maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
+
+# # find mean
+# meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
+# meanVal = meanVal/nuclearLargeRddCurrent.count()
     
 print("Current Sensor: ")
 print("Minimum: ")
