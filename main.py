@@ -173,8 +173,6 @@ colNamesLarge = nuclearLarge.schema.names
 
 nuclearLargeRdd = nuclearLarge.rdd
 
-
-
 # function to input into max
 
 def maxMapping(x):
@@ -184,14 +182,13 @@ def minMapping(x):
       yield min(x)
 
 def sumMapping(x): 
-  parts = (list(x))
-  yield sum(parts, 0)
+  yield sum(x)
 
 # Map partitions operates across entire rdd using mapping function which will
 # yield x 
 maximumMap = nuclearLargeRdd.mapPartitions(maxMapping)
 minimumMap = nuclearLargeRdd.mapPartitions(minMapping)
-sumMap = nuclearLargeRdd.mapPartitions(sumMapping).collect()
+sumMap = nuclearLargeRdd.mapPartitions(sumMapping)
 
 maxReducer = maximumMap.reduce(lambda x, y: x if (x > y) else y)
 
@@ -202,9 +199,9 @@ minReducer = minimumMap.reduce(lambda x, y: x if (x < y) else y)
 # meanVal = sumMap.reduce(lambda x,y: x+y/nuclearLargeRdd.count()) 
 
 
-meanVal = sumMap
+sumValue = nuclearLargeRdd.reduce(lambda x, y: x)
+
+print(sumValue)
 
 print(maxReducer)
 print(minReducer)
-#print(sumMap)
-print(meanVal)
