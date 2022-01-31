@@ -162,7 +162,8 @@ pipelineActivate(stages, classifierChoice(3))
 # Task 7: Discuss if features can detect abnormality in reactors
 
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
-#RUN IN GOOGLE COLLAB
+# RUNNING IN GOOGLE COLLAB AS VSCODE IMPLEMENTATION WAS INOPERABLE
+
 
 nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
 nuclearLarge = nuclearLarge.drop("Status")
@@ -172,48 +173,32 @@ nuclearLargeRdd = nuclearLarge.rdd
 
 
 
-# find minimum, if x is less than y return x else return y, aggregate elements using this function
+# function to input into max
 
-def minimumNuclear(x):
-    yield x.min()
+def maxMapping(x):
+      yield max(x)
 
-def  minimumFunction(x, y): 
-    if (x < y):
-        return x 
-    else: 
-        return y
+def minMapping(x):
+      yield min(x)
 
-minmap = nuclearLargeRdd.mapPartitions(minimumNuclear)
+def sumMapping(x):
+      yield x
 
-minReducer = minmap.reduce(minimumFunction)
+# Map partitions operates across entire rdd using mapping function which will
+# yield x 
+maximumMap = nuclearLargeRdd.mapPartitions(maxMapping)
+minimumMap = nuclearLargeRdd.mapPartitions(minMapping)
+sumMap = nuclearLargeRdd.mapPartitions(sumMapping)
 
+maxReducer = maximumMap.reduce(lambda x, y: x if (x > y) else y)
+
+minReducer = minimumMap.reduce(lambda x, y: x if (x < y) else y)
+
+# meanVal = sumMap.reduce(lambda x: x/nuclearLargeRdd.count())
+# meanVal = meanVal/nuclearLargeRdd.count()
+meanVal = nuclearLargeRdd.reduce(lambda x,y: x+y) / nuclearLargeRdd.count()
+
+print(maxReducer)
 print(minReducer)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # find maximum, if x is more than y return x else return y, aggregate elements using this function
-# maximum = nuclearLargeRddCurrent.reduce(lambda x, y: x if (x > y) else y)
-
-# # find mean
-# meanVal = nuclearLargeRddCurrent.reduce(lambda x, y: x+y)
-# meanVal = meanVal/nuclearLargeRddCurrent.count()
-    
-print("Current Sensor: ")
-print("Minimum: ")
-print(minimum)
-print("Maximum: ")
-print(maximum)
-print("Mean: ")
+#print(sumMap)
 print(meanVal)
