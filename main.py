@@ -20,6 +20,7 @@ from pyspark.mllib.classification import SVMWithSGD, SVMModel
 from pyspark.mllib.regression import LabeledPoint
 from pyspark.mllib.tree import DecisionTree, DecisionTreeModel
 from pyspark.mllib.util import MLUtils
+import numpy
 import pandas 
 import seaborn
 import matplotlib.pyplot as plt
@@ -172,41 +173,36 @@ pipelineActivate(stages, classifierChoice(3))
 # RUNNING IN GOOGLE COLLAB AS VSCODE IMPLEMENTATION WAS INOPERABLE
 
 
-# nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
-# nuclearLarge = nuclearLarge.drop("Status")
-# colNamesLarge = nuclearLarge.schema.names
+nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
+nuclearLarge = nuclearLarge.drop("Status")
+colNamesLarge = nuclearLarge.schema.names
 
-# nuclearLargeRdd = nuclearLarge.rdd
+nuclearLargeRdd = nuclearLarge.rdd
 
 # function to input into max
+def maxMapping(x):
+    yield max(x)
 
-# def maxMapping(x):
-#       yield max(x)
+def minMapping(x):
+    yield min(x)
 
-# def minMapping(x):
-#       yield min(x)
+def sumMapping(x): 
+    sumArray = numpy.array([list(x)])
+    yield numpy.sum(sumArray,0)
 
-# def sumMapping(x): 
-#   yield sum(x)
+# Map partitions operates across entire rdd using mapping function which will
+# yield x 
+maximumMap = nuclearLargeRdd.mapPartitions(maxMapping)
+minimumMap = nuclearLargeRdd.mapPartitions(minMapping)
+sumMap = nuclearLargeRdd.mapPartitions(sumMapping)
 
-# # Map partitions operates across entire rdd using mapping function which will
-# # yield x 
-# maximumMap = nuclearLargeRdd.mapPartitions(maxMapping)
-# minimumMap = nuclearLargeRdd.mapPartitions(minMapping)
-# sumMap = nuclearLargeRdd.mapPartitions(sumMapping)
+maxReducer = maximumMap.reduce(lambda x, y: x if (x > y) else y)
 
-# maxReducer = maximumMap.reduce(lambda x, y: x if (x > y) else y)
+minReducer = minimumMap.reduce(lambda x, y: x if (x < y) else y)
 
-# minReducer = minimumMap.reduce(lambda x, y: x if (x < y) else y)
+sumMap = nuclearLargeRdd.mapPartitions(sumMapping).collect()
 
-# # meanVal = sumMap.reduce(lambda x: x/nuclearLargeRdd.count())
-# # meanVal = meanVal/nuclearLargeRdd.count()
-# # meanVal = sumMap.reduce(lambda x,y: x+y/nuclearLargeRdd.count()) 
+print(sumMap)
 
-
-# sumValue = nuclearLargeRdd.reduce(lambda x, y: x)
-
-# print(sumValue)
-
-# print(maxReducer)
-# print(minReducer)
+print(maxReducer)
+print(minReducer)
