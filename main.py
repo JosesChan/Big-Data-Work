@@ -122,13 +122,13 @@ stages += [assembler]
 scaler = RobustScaler(inputCol="features", outputCol="scaledFeatures", withScaling=True, withCentering=False, lower=0.25, upper=0.75)
 stages += [scaler]
 
-# Normalize features.
-normalizer = Normalizer(inputCol="features", outputCol="normFeatures", p=(2))
-stages += [normalizer]
+# # Normalize features.
+# normalizer = Normalizer(inputCol="features", outputCol="normFeatures", p=(2))
+# stages += [normalizer]
 
-# Normalize scaled features
-normalizerScaled = Normalizer(inputCol="scaledFeatures", outputCol="normRobScaleFeatures", p=(2))
-stages += [normalizerScaled]
+# # Normalize scaled features
+# normalizerScaled = Normalizer(inputCol="scaledFeatures", outputCol="normRobScaleFeatures", p=(2))
+# stages += [normalizerScaled]
 
 
 def classifierChoice(classifierChosen):
@@ -159,6 +159,7 @@ def pipelineActivate(stages, classifierChoice):
     falsePositives = predictions[(predictions["label"] == 0) & (predictions["prediction"] == 1)].count()
     falseNegative = predictions[(predictions["label"] == 1) & (predictions["prediction"] == 0)].count()
 
+
     print("Test Error = %g" % (1.0 - accuracy))
     print("Sensitivity = %g" % (truePositives/(truePositives+falseNegative)))
     print("Specificity = %g" % (trueNegatives/(trueNegatives+falsePositives)))
@@ -166,10 +167,6 @@ def pipelineActivate(stages, classifierChoice):
 pipelineActivate(stages, classifierChoice(1))
 pipelineActivate(stages, classifierChoice(2))
 pipelineActivate(stages, classifierChoice(3))
-
-# Task 6: Compare results based on task 5, which is best
-
-# Task 7: Discuss if features can detect abnormality in reactors
 
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
 # RUNNING IN GOOGLE COLLAB AS VSCODE IMPLEMENTATION WAS INOPERABLE
