@@ -154,14 +154,14 @@ def pipelineActivate(stages, classifierChoice):
     evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
     accuracy = evaluator.evaluate(predictions)
     
-    # truePositives = sum("label" == 0 & "prediction" == 1)
-    # trueNegatives = sum()
-    # falsePositives = sum()
-    # falseNegatives = sum()
+    truePositives = evaluator.evaluate(predictions, {evaluator.metricName: "truePositiveRateByLabel"})
+    trueNegatives = evaluator.evaluate(predictions, {evaluator.metricName: "falsePositiveRateByLabel"})
+    falsePositives = evaluator.evaluate(predictions, {evaluator.metricName: "falsePositiveRateByLabel"})
+    falseNegative = predictions[(predictions["label"] == 1) & (predictions["prediction"] == 0)].count()
 
     print("Test Error = %g" % (1.0 - accuracy))
-    print("Specificity = %g" % (1.0 - accuracy))
-    print("Sensitivity = %g" % (1.0 - accuracy))
+    print("Sensitivity = %g" % (truePositives/(truePositives+falseNegative)))
+    print("Specificity = %g" % (trueNegatives/(trueNegatives+falsePositives)))
 
 pipelineActivate(stages, classifierChoice(1))
 pipelineActivate(stages, classifierChoice(2))
@@ -175,11 +175,11 @@ pipelineActivate(stages, classifierChoice(3))
 # RUNNING IN GOOGLE COLLAB AS VSCODE IMPLEMENTATION WAS INOPERABLE
 
 
-nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
-nuclearLarge = nuclearLarge.drop("Status")
-colNamesLarge = nuclearLarge.schema.names
+# nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
+# nuclearLarge = nuclearLarge.drop("Status")
+# colNamesLarge = nuclearLarge.schema.names
 
-nuclearLargeRdd = nuclearLarge.rdd
+# nuclearLargeRdd = nuclearLarge.rdd
 
 # function to input into max
 
