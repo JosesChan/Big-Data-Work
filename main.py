@@ -122,11 +122,11 @@ stages += [assembler]
 scaler = RobustScaler(inputCol="features", outputCol="scaledFeatures", withScaling=True, withCentering=False, lower=0.25, upper=0.75)
 stages += [scaler]
 
-# Normalize each Vector using $L^1$ norm.
+# Normalize features.
 normalizer = Normalizer(inputCol="features", outputCol="normFeatures", p=(2))
 stages += [normalizer]
 
-# Normalize each Vector using $L^1$ norm.
+# Normalize scaled features
 normalizerScaled = Normalizer(inputCol="scaledFeatures", outputCol="normRobScaleFeatures", p=(2))
 stages += [normalizerScaled]
 
@@ -154,9 +154,9 @@ def pipelineActivate(stages, classifierChoice):
     evaluator = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction")
     accuracy = evaluator.evaluate(predictions)
     
-    truePositives = evaluator.evaluate(predictions, {evaluator.metricName: "truePositiveRateByLabel"})
-    trueNegatives = evaluator.evaluate(predictions, {evaluator.metricName: "falsePositiveRateByLabel"})
-    falsePositives = evaluator.evaluate(predictions, {evaluator.metricName: "falsePositiveRateByLabel"})
+    truePositives = predictions[(predictions["label"] == 1) & (predictions["prediction"] == 1)].count()
+    trueNegatives = predictions[(predictions["label"] == 0) & (predictions["prediction"] == 0)].count()
+    falsePositives = predictions[(predictions["label"] == 0) & (predictions["prediction"] == 1)].count()
     falseNegative = predictions[(predictions["label"] == 1) & (predictions["prediction"] == 0)].count()
 
     print("Test Error = %g" % (1.0 - accuracy))
