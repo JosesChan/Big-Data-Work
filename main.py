@@ -176,7 +176,6 @@ pipelineActivate(stages, classifierChoice(3))
 nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
 nuclearLarge = nuclearLarge.drop("Status")
 colNamesLarge = nuclearLarge.schema.names
-
 nuclearLargeRdd = nuclearLarge.rdd
 
 # function to input into max
@@ -187,22 +186,22 @@ def minMapping(x):
     yield min(x)
 
 def sumMapping(x): 
-    sumArray = numpy.array([list(x)])
+    sumArray = numpy.array(list(x))
     yield numpy.sum(sumArray,0)
 
 # Map partitions operates across entire rdd using mapping function which will
 # yield x 
 maximumMap = nuclearLargeRdd.mapPartitions(maxMapping)
 minimumMap = nuclearLargeRdd.mapPartitions(minMapping)
-sumMap = nuclearLargeRdd.mapPartitions(sumMapping)
+sumMap = nuclearLargeRdd.mapPartitions(sumMapping).collect()
 
 maxReducer = maximumMap.reduce(lambda x, y: x if (x > y) else y)
 
 minReducer = minimumMap.reduce(lambda x, y: x if (x < y) else y)
 
-sumMap = nuclearLargeRdd.mapPartitions(sumMapping).collect()
-
+print("Mean")
 print(sumMap)
-
+print("Maximum:")
 print(maxReducer)
+print("Minimum:")
 print(minReducer)
