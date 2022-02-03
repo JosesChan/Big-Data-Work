@@ -95,10 +95,27 @@ print(pandasNuclearPlantsSmall.corr(method="pearson"))
 seedNumber = 1234
 # Split the data into training and test sets (30% held out for testing)
 (trainingData, testData) = sparksNuclearPlantsSmall.randomSplit([0.7, 0.3], seed=seedNumber)
-print("Training Data Rows:")
+
+# find where status equals group
+normTrain = (trainingData.where(col("Status") == "Normal"))
+abnormTrain = (trainingData.where(col("Status") == "Abnormal"))
+normTest = (testData.where(col("Status")== "Normal"))
+abnormTest = (testData.where(col("Status") == "Abnormal"))
+
+#output dataset statistics
+print("Training Data Records:")
 print(trainingData.count())
-print("Test Data Rows: ")
+print("Normal Status Records: ")
+print(normTrain.count())
+print("Abnormal Status Records: ")
+print(abnormTrain.count())
+print("Test Data Records: ")
 print(testData.count())
+print("Normal Status Records: ")
+print(normTest.count())
+print("Abnormal Status Records: ")
+print(abnormTest.count())
+
 
 # Task 5: Train a decision tree, svm and an artificial neural network. Evaluate classifiers by computing error rate (Incorrectly classified samples/Total Classified Samples), calculate sensitivity and specificity 
 # Store list of original column names and data held by the columns
