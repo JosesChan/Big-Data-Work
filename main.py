@@ -172,11 +172,12 @@ pipelineActivate(stages, classifierChoice(3))
 # Task 8: Use mapReduce in pySpark to calculate minimum, maximum and mean for every feature
 # RUNNING IN GOOGLE COLLAB AS VSCODE IMPLEMENTATION WAS INOPERABLE
 
-
+# Set up rdd and get col names and length of rdd
 nuclearLarge = spark.read.csv("nuclear_plants_big_dataset.csv", header=True,inferSchema=True)
 nuclearLarge = nuclearLarge.drop("Status")
 colNamesLarge = nuclearLarge.schema.names
 nuclearLargeRdd = nuclearLarge.rdd
+iteratorColNames = 0
 
 # function to input into max
 def maxMapping(x):
@@ -185,23 +186,36 @@ def maxMapping(x):
 def minMapping(x):
     yield min(x)
 
+# sums chunks to arrays
 def sumMapping(x): 
-    sumArray = numpy.array(list(x))
-    yield numpy.sum(sumArray,0)
+    sumArray = numpy.array((list(x)))
+    yield numpy.sum(sumArray, 0)
 
 # Map partitions operates across entire rdd using mapping function which will
 # yield x 
 maximumMap = nuclearLargeRdd.mapPartitions(maxMapping)
 minimumMap = nuclearLargeRdd.mapPartitions(minMapping)
-sumMap = nuclearLargeRdd.mapPartitions(sumMapping).collect()
+sumMap = nuclearLargeRdd.mapPartitions(sumMapping)
 
+# Reduce between chunks for each partition
+# Use function to determine minimum
 maxReducer = maximumMap.reduce(lambda x, y: x if (x > y) else y)
-
+# Use function to determine maximum
 minReducer = minimumMap.reduce(lambda x, y: x if (x < y) else y)
 
-print("Mean")
-print(sumMap)
+# Sum arrays, axis equals 0 to show all columns/features
+sums = sumMap.reduce(lambda x,y: numpy.sum([x,y], axis = 0))
+
+# Count number of rows in the rdd
+rddLength = nuclearLargeRdd.count()
+
+# Output values
 print("Maximum:")
 print(maxReducer)
 print("Minimum:")
 print(minReducer)
+print("Mean")
+for i in sums:
+    print(colNamesLarge[iteratorColNames])
+    print(i/rddLength)
+    iteratorColNames += 1
